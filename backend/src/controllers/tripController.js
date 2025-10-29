@@ -92,3 +92,19 @@ export const deleteTrip = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// @desc Get all trips from all users (public trips)
+export const getAllTrips = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT trips.*, users.name AS user_name 
+       FROM trips 
+       JOIN users ON trips.user_id = users.id
+       ORDER BY trips.created_at DESC`
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to load public trips" });
+    }
+};

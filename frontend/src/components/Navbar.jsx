@@ -23,7 +23,7 @@ export default function Navbar() {
             }}
         >
             <div>
-                <Link to="/trips" style={{ textDecoration: "none", fontWeight: 700 }}>
+                <Link to="/dashboard" style={{ textDecoration: "none", fontWeight: 700 }}>
                     Travel Expense Tracker
                 </Link>
             </div>
@@ -33,7 +33,7 @@ export default function Navbar() {
 
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <Link to="/trips">Trips</Link>
+                <Link to="/feed">Feed</Link>
                 <Link to="/profile">Profile</Link>
                 {user && <span style={{ opacity: 0.8 }}>Hi, {user.name}</span>}
                 <button onClick={doLogout}>Logout</button>

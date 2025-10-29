@@ -31,7 +31,6 @@ function App() {
       />
       <Route path="*" element={<NotFound />} />
 
-
       <Route path="/" element={<Navigate to="/login" />} />
 
       <Route path="/login" element={<Login />} />

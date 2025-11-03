@@ -9,6 +9,7 @@ import {
     updateTrip,
     deleteTrip,
 } from "../controllers/tripController.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 /**
  * @swagger
@@ -17,78 +18,32 @@ import {
  *   description: Trip management endpoints
  */
 
-/**
- * @swagger
- * /api/trips:
- *   get:
- *     summary: Get all trips (paginated)
- *     tags: [Trips]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of trips to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Pagination offset
- *     responses:
- *       200:
- *         description: List of trips
- *   post:
- *     summary: Create a new trip
- *     tags: [Trips]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               destination:
- *                 type: string
- *               budget:
- *                 type: number
- *     responses:
- *       201:
- *         description: Trip created successfully
- */
-
-
 const router = express.Router();
 
 /**
  * GET /api/trips
  * Supports pagination via ?limit=10&offset=0
+ * Protected: requires valid JWT
  */
-router.get("/", getTrips);
+router.get("/", verifyToken, getTrips);
 
 /**
  * GET /api/trips/:id
+ * Protected: requires valid JWT
  */
-router.get("/:id", getTripById);
+router.get("/:id", verifyToken, getTripById);
 
 /**
  * POST /api/trips
+ * Protected: requires valid JWT
  */
 router.post(
     "/",
+    verifyToken,
     [
         body("title").isString().notEmpty().withMessage("Title is required"),
-        body("destination")
-            .isString()
-            .notEmpty()
-            .withMessage("Destination is required"),
-        body("budget")
-            .optional()
-            .isNumeric()
-            .withMessage("Budget must be a number"),
+        body("destination").isString().notEmpty().withMessage("Destination is required"),
+        body("budget").optional().isNumeric().withMessage("Budget must be a number"),
         handleValidationErrors,
     ],
     createTrip
@@ -96,9 +51,11 @@ router.post(
 
 /**
  * PUT /api/trips/:id
+ * Protected: requires valid JWT
  */
 router.put(
     "/:id",
+    verifyToken,
     [
         body("title").optional().isString(),
         body("destination").optional().isString(),
@@ -110,7 +67,8 @@ router.put(
 
 /**
  * DELETE /api/trips/:id
+ * Protected: requires valid JWT
  */
-router.delete("/:id", deleteTrip);
+router.delete("/:id", verifyToken, deleteTrip);
 
 export default router;

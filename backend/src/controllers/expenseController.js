@@ -1,4 +1,6 @@
-import { pool } from "../db.js";
+import { pool } from "../db.js"
+import { successResponse, errorResponse } from "../utils/responseHelpers.js";
+import { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES } from "../config/constants.js";
 
 // @desc Create new expense
 export const createExpense = async (req, res) => {
@@ -80,7 +82,8 @@ export const deleteExpense = async (req, res) => {
 
         res.json({ message: "Expense deleted successfully" });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return successResponse(res, HTTP_STATUS.CREATED, newUser, SUCCESS_MESSAGES.USER_REGISTERED);
     }
 };
+
+export default { createExpense, updateExpense, deleteExpense };

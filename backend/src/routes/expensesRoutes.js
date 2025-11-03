@@ -1,12 +1,16 @@
 // src/routes/expenses.js
+// backend/src/routes/expensesRoutes.js
 import express from "express";
 import { body } from "express-validator";
-import { handleValidationErrors } from "../middleware/validate.js";
 import {
     createExpense,
+    getExpenses,
     updateExpense,
     deleteExpense,
 } from "../controllers/expenseController.js";
+import { handleValidationErrors } from "../middleware/validate.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
+
 
 /**
  * @swagger
@@ -48,7 +52,8 @@ import {
 
 const router = express.Router();
 
-
+// Get all expenses (authenticated)
+router.get("/", verifyToken, getExpenses);
 
 /**
  * POST /api/expenses

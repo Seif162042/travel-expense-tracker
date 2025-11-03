@@ -1,4 +1,6 @@
 import { pool } from "../db.js";
+import { successResponse, errorResponse } from "../utils/responseHelpers.js";
+import { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES } from "../config/constants.js";
 
 // @desc Create a new trip
 export const createTrip = async (req, res) => {
@@ -110,7 +112,8 @@ export const getAllTrips = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Failed to load public trips" });
+        return successResponse(res, HTTP_STATUS.CREATED, newUser, SUCCESS_MESSAGES.USER_REGISTERED);
     }
 };
+export default { createTrip, getTrips, updateTrip, deleteTrip };
+

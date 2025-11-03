@@ -23,16 +23,22 @@ export const createTrip = async (req, res) => {
 };
 
 // @desc Get all trips for logged-in user
-export const getTrips = async (req, res) => {
-    const user_id = req.user.id;
+export const getTrips = async (req, res, next) => {
     try {
-        const result = await pool.query("SELECT * FROM trips WHERE user_id = $1 ORDER BY created_at DESC", [user_id]);
-        res.json(result.rows);
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
+        const { rows } = await pool.query(
+            "SELECT * FROM trips ORDER BY id DESC LIMIT $1 OFFSET $2",
+            [limit, offset]
+        );
+
+        res.status(200).json(rows);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+        next(err); // let global error handler catch it
     }
 };
+
 
 // @desc Get single trip by ID
 export const getTripById = async (req, res) => {

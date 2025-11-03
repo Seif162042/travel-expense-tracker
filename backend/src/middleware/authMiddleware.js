@@ -1,30 +1,16 @@
-// backend/src/middleware/auth.js
+// backend/src/middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/constants.js";
 
-/**
- * Middleware to verify JWT access tokens.
- * Attaches the decoded payload to req.user if valid.
- * Responds with 401 Unauthorized if missing or invalid.
- */
 export const verifyToken = (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
-
-        // No header or wrong format
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        const h = req.headers.authorization;
+        if (!h || !h.startsWith("Bearer ")) {
             return res.status(401).json({ message: "No token provided" });
         }
-
-        // Extract token from "Bearer <token>"
-        const token = authHeader.split(" ")[1];
-
-        // Verify and decode token
+        const token = h.split(" ")[1];
         const decoded = jwt.verify(token, JWT_SECRET);
-
-        // Attach user payload to request
-        req.user = decoded;
-
+        req.user = decoded; // { id, email }
         next();
     } catch (err) {
         console.error("❌ Token verification failed:", err.message);

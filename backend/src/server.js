@@ -1,6 +1,6 @@
 // backend/src/server.js
-import app from "./app.js";          // Import the Express app
-import { testConnection } from "./db.js";  // Test database connection
+import app from "./app.js";
+import { testConnection } from "./db.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 4000;
 
 const startServer = async () => {
     try {
-        await testConnection();  // Check Neon (Postgres) connection
+        await testConnection();
         const server = app.listen(PORT, () => {
             console.log(`✅ Server running on port ${PORT}`);
         });

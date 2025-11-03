@@ -1,89 +1,100 @@
-import { pool } from "../db.js"
+// backend/src/controllers/expenseController.js
+import { pool } from "../db.js";
+import { HTTP_STATUS, SUCCESS_MESSAGES } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
-import { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES } from "../config/constants.js";
 
-// @desc Create new expense
+// GET /api/expenses (requires verifyToken)
+export const getExpenses = async (req, res) => {
+    try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const q = await pool.query(
+            `SELECT id, user_id, trip_id, description, amount, category, date, created_at
+       FROM expenses
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 100`,
+            [user_id]
+        );
+        return res.status(HTTP_STATUS.OK).json(q.rows);
+    } catch (err) {
+        console.error(err);
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch expenses");
+    }
+};
+
+// POST /api/expenses (requires verifyToken)
 export const createExpense = async (req, res) => {
-    const { trip_id, category, amount, description, date } = req.body;
-    const user_id = req.user.id;
-
-    if (!trip_id || !category || !amount)
-        return res.status(400).json({ message: "Missing required fields" });
-
     try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const { trip_id, description, amount, category, date } = req.body;
+        if (!trip_id || !description || amount == null) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
         const result = await pool.query(
-            `INSERT INTO expenses (user_id, trip_id, category, amount, description, date)
+            `INSERT INTO expenses (user_id, trip_id, description, amount, category, date)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-            [user_id, trip_id, category, amount, description, date]
+       RETURNING id, user_id, trip_id, description, amount, category, date, created_at`,
+            [user_id, trip_id, description, amount, category ?? null, date ?? null]
         );
-        res.status(201).json(result.rows[0]);
+
+        return successResponse(res, HTTP_STATUS.CREATED, result.rows[0], SUCCESS_MESSAGES.EXPENSE_CREATED);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create expense");
     }
 };
 
-// @desc Get all expenses for a trip
-export const getExpensesByTrip = async (req, res) => {
-    const { trip_id } = req.params;
-    const user_id = req.user.id;
-
-    try {
-        const result = await pool.query(
-            "SELECT * FROM expenses WHERE user_id = $1 AND trip_id = $2 ORDER BY date DESC",
-            [user_id, trip_id]
-        );
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// @desc Update an expense
+// PUT /api/expenses/:id (requires verifyToken)
 export const updateExpense = async (req, res) => {
-    const { id } = req.params;
-    const { category, amount, description, date } = req.body;
-    const user_id = req.user.id;
-
     try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const { id } = req.params;
+        const { description, amount, category, date } = req.body;
+
         const result = await pool.query(
             `UPDATE expenses
-       SET category = $1, amount = $2, description = $3, date = $4
-       WHERE id = $5 AND user_id = $6
-       RETURNING *`,
-            [category, amount, description, date, id, user_id]
+       SET description = COALESCE($2, description),
+           amount = COALESCE($3, amount),
+           category = COALESCE($4, category),
+           date = COALESCE($5, date)
+       WHERE id = $1 AND user_id = $6
+       RETURNING id, user_id, trip_id, description, amount, category, date, created_at`,
+            [id, description ?? null, amount ?? null, category ?? null, date ?? null, user_id]
         );
 
-        if (result.rows.length === 0)
-            return res.status(404).json({ message: "Expense not found or not yours" });
-
-        res.json(result.rows[0]);
+        if (!result.rows.length) return res.status(404).json({ message: "Expense not found or not yours" });
+        return res.status(HTTP_STATUS.OK).json(result.rows[0]);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update expense");
     }
 };
 
-// @desc Delete expense
+// DELETE /api/expenses/:id (requires verifyToken)
 export const deleteExpense = async (req, res) => {
-    const { id } = req.params;
-    const user_id = req.user.id;
-
     try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const { id } = req.params;
         const result = await pool.query(
-            "DELETE FROM expenses WHERE id = $1 AND user_id = $2 RETURNING id",
+            `DELETE FROM expenses WHERE id = $1 AND user_id = $2 RETURNING id`,
             [id, user_id]
         );
 
-        if (result.rows.length === 0)
-            return res.status(404).json({ message: "Expense not found or not yours" });
-
-        res.json({ message: "Expense deleted successfully" });
+        if (!result.rows.length) return res.status(404).json({ message: "Expense not found or not yours" });
+        return res.status(HTTP_STATUS.OK).json({ deleted: result.rows[0].id });
     } catch (err) {
-        return successResponse(res, HTTP_STATUS.CREATED, newUser, SUCCESS_MESSAGES.USER_REGISTERED);
+        console.error(err);
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to delete expense");
     }
 };
 
-export default { createExpense, updateExpense, deleteExpense };
+export default { createExpense, getExpenses, updateExpense, deleteExpense };

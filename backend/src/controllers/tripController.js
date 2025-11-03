@@ -1,119 +1,111 @@
+// backend/src/controllers/tripController.js
 import { pool } from "../db.js";
+import { HTTP_STATUS, SUCCESS_MESSAGES } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
-import { HTTP_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES } from "../config/constants.js";
 
-// @desc Create a new trip
-export const createTrip = async (req, res) => {
-    const { destination, start_date, end_date, budget, notes } = req.body;
-    const user_id = req.user.id;
-
-    if (!destination || !start_date || !end_date)
-        return res.status(400).json({ message: "Missing required fields" });
-
+// GET /api/trips
+export const getTrips = async (req, res) => {
     try {
+        // return all trips (your schema may include title/destination/budget)
         const result = await pool.query(
-            `INSERT INTO trips (user_id, destination, start_date, end_date, budget, notes)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-            [user_id, destination, start_date, end_date, budget, notes]
+            `SELECT id, user_id, title, destination, budget, created_at
+       FROM trips
+       ORDER BY created_at DESC
+       LIMIT 50`
         );
-        res.status(201).json(result.rows[0]);
+        return res.status(HTTP_STATUS.OK).json(result.rows);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trips");
     }
 };
 
-// @desc Get all trips for logged-in user
-export const getTrips = async (req, res, next) => {
-    try {
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = parseInt(req.query.offset) || 0;
-
-        const { rows } = await pool.query(
-            "SELECT * FROM trips ORDER BY id DESC LIMIT $1 OFFSET $2",
-            [limit, offset]
-        );
-
-        res.status(200).json(rows);
-    } catch (err) {
-        next(err); // let global error handler catch it
-    }
-};
-
-
-// @desc Get single trip by ID
+// GET /api/trips/:id
 export const getTripById = async (req, res) => {
-    const { id } = req.params;
-    const user_id = req.user.id;
-
     try {
-        const result = await pool.query("SELECT * FROM trips WHERE id = $1 AND user_id = $2", [id, user_id]);
-        if (result.rows.length === 0)
-            return res.status(404).json({ message: "Trip not found" });
-
-        res.json(result.rows[0]);
+        const { id } = req.params;
+        const q = await pool.query(
+            `SELECT id, user_id, title, destination, budget, created_at
+       FROM trips WHERE id = $1`,
+            [id]
+        );
+        if (!q.rows.length) return res.status(404).json({ message: "Trip not found" });
+        return res.status(HTTP_STATUS.OK).json(q.rows[0]);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trip");
     }
 };
 
-// @desc Update a trip
-export const updateTrip = async (req, res) => {
-    const { id } = req.params;
-    const { destination, start_date, end_date, budget, notes } = req.body;
-    const user_id = req.user.id;
-
+// POST /api/trips  (requires verifyToken)
+export const createTrip = async (req, res) => {
     try {
+        const { title, destination, budget } = req.body;
+        const user_id = req.user?.id;
+
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+        if (!title || !destination) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const result = await pool.query(
+            `INSERT INTO trips (user_id, title, destination, budget)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, user_id, title, destination, budget, created_at`,
+            [user_id, title, destination, budget ?? null]
+        );
+
+        return successResponse(res, HTTP_STATUS.CREATED, result.rows[0], SUCCESS_MESSAGES.TRIP_CREATED);
+    } catch (err) {
+        console.error(err);
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create trip");
+    }
+};
+
+// PUT /api/trips/:id  (requires verifyToken)
+export const updateTrip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const { title, destination, budget } = req.body;
         const result = await pool.query(
             `UPDATE trips
-       SET destination = $1, start_date = $2, end_date = $3, budget = $4, notes = $5
-       WHERE id = $6 AND user_id = $7
-       RETURNING *`,
-            [destination, start_date, end_date, budget, notes, id, user_id]
+       SET title = COALESCE($2, title),
+           destination = COALESCE($3, destination),
+           budget = COALESCE($4, budget)
+       WHERE id = $1 AND user_id = $5
+       RETURNING id, user_id, title, destination, budget, created_at`,
+            [id, title ?? null, destination ?? null, budget ?? null, user_id]
         );
 
-        if (result.rows.length === 0)
-            return res.status(404).json({ message: "Trip not found or not yours" });
-
-        res.json(result.rows[0]);
+        if (!result.rows.length) return res.status(404).json({ message: "Trip not found or not yours" });
+        return res.status(HTTP_STATUS.OK).json(result.rows[0]);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update trip");
     }
 };
 
-// @desc Delete a trip
+// DELETE /api/trips/:id  (requires verifyToken)
 export const deleteTrip = async (req, res) => {
-    const { id } = req.params;
-    const user_id = req.user.id;
-
     try {
-        const result = await pool.query("DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id", [id, user_id]);
-        if (result.rows.length === 0)
-            return res.status(404).json({ message: "Trip not found or not yours" });
+        const { id } = req.params;
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-        res.json({ message: "Trip deleted successfully" });
+        const result = await pool.query(
+            `DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id`,
+            [id, user_id]
+        );
+
+        if (!result.rows.length) return res.status(404).json({ message: "Trip not found or not yours" });
+        return res.status(HTTP_STATUS.OK).json({ deleted: result.rows[0].id });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to delete trip");
     }
 };
 
-// @desc Get all trips from all users (public trips)
-export const getAllTrips = async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT trips.*, users.name AS user_name 
-       FROM trips 
-       JOIN users ON trips.user_id = users.id
-       ORDER BY trips.created_at DESC`
-        );
-        res.json(result.rows);
-    } catch (error) {
-        return successResponse(res, HTTP_STATUS.CREATED, newUser, SUCCESS_MESSAGES.USER_REGISTERED);
-    }
-};
-export default { createTrip, getTrips, updateTrip, deleteTrip };
-
+export default { createTrip, getTrips, getTripById, updateTrip, deleteTrip };

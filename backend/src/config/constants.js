@@ -5,7 +5,6 @@ export const JWT_ALGORITHM = "HS256";
 export const PASSWORD_MIN_LENGTH = 8;
 export const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret";
 
-
 export const HTTP_STATUS = {
     OK: 200,
     CREATED: 201,

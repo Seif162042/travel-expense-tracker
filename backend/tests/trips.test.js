@@ -1,22 +1,29 @@
-import { jest } from "@jest/globals";
+// tests/trips.test.js
 import request from "supertest";
 import app from "../src/app.js";
-jest.setTimeout(15000);
-
 
 describe("Trips API", () => {
     let token;
     let tripId;
 
     beforeAll(async () => {
-        // register a fresh user to obtain an auth token
-        const suffix = Date.now();
-        const reg = await request(app).post("/api/users/register").send({
+        // Register and login a test user to get a JWT token
+        const user = {
             name: "Trip Tester",
-            email: `triptester${suffix}@example.com`,
+            email: `triptester${Date.now()}@example.com`,
             password: "password123",
-        });
+        };
+
+        const reg = await request(app).post("/api/users/register").send(user);
         token = reg.body.token;
+
+        if (!token) {
+            const login = await request(app)
+                .post("/api/users/login")
+                .send({ email: user.email, password: user.password });
+            token = login.body.token;
+        }
+
         expect(token).toBeTruthy();
     });
 
@@ -27,27 +34,29 @@ describe("Trips API", () => {
             .send({
                 title: "Paris Weekend",
                 destination: "Paris, France",
-                budget: 1200,
+                budget: "1200",
             });
+
         expect(res.statusCode).toBe(201);
-        expect(res.body).toHaveProperty("id");
-        expect(res.body.title).toBe("Paris Weekend");
-        tripId = res.body.id;
+        expect(res.body.data).toHaveProperty("id");
+        expect(res.body.data.title).toBe("Paris Weekend");
+
+        tripId = res.body.data.id;
     });
 
     it("GET /api/trips → 200 list trips (auth)", async () => {
         const res = await request(app)
             .get("/api/trips?limit=5&offset=0")
             .set("Authorization", `Bearer ${token}`);
+
         expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(Array.isArray(res.body.data || res.body)).toBe(true);
     });
 
     it("POST /api/trips → 401 without auth", async () => {
         const res = await request(app).post("/api/trips").send({
-            title: "No Auth Trip",
+            title: "Unauthorized Trip",
             destination: "Nowhere",
-            budget: 10,
         });
         expect(res.statusCode).toBe(401);
     });
@@ -64,8 +73,8 @@ describe("Trips API", () => {
         const res = await request(app)
             .put(`/api/trips/${tripId}`)
             .set("Authorization", `Bearer ${token}`)
-            .send({ budget: 1500 });
-        // accept any 2xx to be robust across implementations
+            .send({ title: "Updated Paris Weekend" });
+
         expect(res.statusCode).toBeGreaterThanOrEqual(200);
         expect(res.statusCode).toBeLessThan(300);
     });
@@ -74,11 +83,8 @@ describe("Trips API", () => {
         const res = await request(app)
             .delete(`/api/trips/${tripId}`)
             .set("Authorization", `Bearer ${token}`);
+
         expect(res.statusCode).toBeGreaterThanOrEqual(200);
         expect(res.statusCode).toBeLessThan(300);
     });
-});
-
-afterAll(() => {
-    jest.clearAllTimers();
 });

@@ -14,6 +14,20 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
+// Redirect the root to Swagger docs (fastest option)
+app.get("/", (_req, res) => {
+    res.redirect("/docs");
+});
+
+// Simple health endpoint at top-level (useful for Render checks)
+app.get("/health", (_req, res) => {
+    res.status(200).json({
+        ok: true,
+        uptime: process.uptime(),
+        env: process.env.NODE_ENV || "development",
+    });
+});
+
 app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));

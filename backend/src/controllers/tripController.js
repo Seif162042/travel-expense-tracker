@@ -6,9 +6,8 @@ import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 // GET /api/trips
 export const getTrips = async (req, res) => {
     try {
-        // return all trips (your schema may include title/destination/budget)
         const result = await pool.query(
-            `SELECT id, user_id, title, destination, budget, created_at
+            `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
        FROM trips
        ORDER BY created_at DESC
        LIMIT 50`
@@ -25,8 +24,9 @@ export const getTripById = async (req, res) => {
     try {
         const { id } = req.params;
         const q = await pool.query(
-            `SELECT id, user_id, title, destination, budget, created_at
-       FROM trips WHERE id = $1`,
+            `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
+       FROM trips
+       WHERE id = $1::uuid`,
             [id]
         );
         if (!q.rows.length) return res.status(404).json({ message: "Trip not found" });
@@ -37,22 +37,25 @@ export const getTripById = async (req, res) => {
     }
 };
 
-// POST /api/trips  (requires verifyToken)
+// POST /api/trips
 export const createTrip = async (req, res) => {
     try {
         const { title, destination, budget } = req.body;
         const user_id = req.user?.id;
-
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
         if (!title || !destination) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // accept both snake_case and camelCase
+        const startDate = req.body.start_date ?? req.body.startDate ?? null;
+        const endDate = req.body.end_date ?? req.body.endDate ?? null;
+
         const result = await pool.query(
-            `INSERT INTO trips (user_id, title, destination, budget)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, user_id, title, destination, budget, created_at`,
-            [user_id, title, destination, budget ?? null]
+            `INSERT INTO trips (user_id, title, destination, start_date, end_date, budget)
+       VALUES ($1, $2, $3, $4::date, $5::date, $6)
+       RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at`,
+            [user_id, title, destination, startDate, endDate, budget ?? null]
         );
 
         return successResponse(res, HTTP_STATUS.CREATED, result.rows[0], SUCCESS_MESSAGES.TRIP_CREATED);
@@ -62,7 +65,7 @@ export const createTrip = async (req, res) => {
     }
 };
 
-// PUT /api/trips/:id  (requires verifyToken)
+// PUT /api/trips/:id
 export const updateTrip = async (req, res) => {
     try {
         const { id } = req.params;
@@ -70,14 +73,19 @@ export const updateTrip = async (req, res) => {
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
         const { title, destination, budget } = req.body;
+        const startDate = req.body.start_date ?? req.body.startDate ?? null;
+        const endDate = req.body.end_date ?? req.body.endDate ?? null;
+
         const result = await pool.query(
             `UPDATE trips
-       SET title = COALESCE($2, title),
+       SET title       = COALESCE($2, title),
            destination = COALESCE($3, destination),
-           budget = COALESCE($4, budget)
-       WHERE id = $1 AND user_id = $5
-       RETURNING id, user_id, title, destination, budget, created_at`,
-            [id, title ?? null, destination ?? null, budget ?? null, user_id]
+           start_date  = COALESCE($4::date, start_date),
+           end_date    = COALESCE($5::date, end_date),
+           budget      = COALESCE($6, budget)
+       WHERE id = $1::uuid AND user_id = $7
+       RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at`,
+            [id, title ?? null, destination ?? null, startDate, endDate, budget ?? null, user_id]
         );
 
         if (!result.rows.length) return res.status(404).json({ message: "Trip not found or not yours" });
@@ -96,7 +104,7 @@ export const deleteTrip = async (req, res) => {
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
         const result = await pool.query(
-            `DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id`,
+            `DELETE FROM trips WHERE id = $1::uuid AND user_id = $2 RETURNING id`,
             [id, user_id]
         );
 

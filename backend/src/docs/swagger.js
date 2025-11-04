@@ -16,6 +16,7 @@ const swaggerSpec = swaggerJSDoc({
         },
         servers: [
             { url: "http://localhost:4000", description: "Local" },
+            { url: process.env.SWAGGER_SERVER || "https://travel-expense-tracker-n1wt.onrender.com", description: "Production" },
         ],
         components: {
             securitySchemes: {

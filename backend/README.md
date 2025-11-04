@@ -51,8 +51,8 @@ Expected output:
 
     PASS  tests/users.test.js
     PASS  tests/trips.test.js
-    Test Suites: 2 passed, 2 total
-    Tests:       4 passed, 4 total
+    Test Suites: 5 passed, 5 total
+    Tests:       19 passed, 19 total
 
 ---
 

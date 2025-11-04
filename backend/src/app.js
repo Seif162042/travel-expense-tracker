@@ -4,7 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-
+import { swaggerServe, swaggerSetup } from "./docs/swagger.js";
 import userRoutes from "./routes/userRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import expenseRoutes from "./routes/expensesRoutes.js";
@@ -34,6 +34,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/docs", swaggerServe, swaggerSetup);
 
 // error handler last
 app.use(errorHandler);

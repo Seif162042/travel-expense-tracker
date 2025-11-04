@@ -28,5 +28,8 @@
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   },
+  "overrides": {
+    "validator": "13.9.0"
+  },
   "license": "MIT"
 }

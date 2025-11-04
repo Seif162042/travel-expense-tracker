@@ -10,16 +10,31 @@ import tripRoutes from "./routes/tripRoutes.js";
 import expenseRoutes from "./routes/expensesRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
-// (Swagger is optional for tests; keep simple here)
-
 const app = express();
 
-// Redirect the root to Swagger docs (fastest option)
-app.get("/", (_req, res) => {
-    res.redirect("/docs");
-});
+/* ---------- Security, CORS, parsing, logging ---------- */
 
-// Simple health endpoint at top-level (useful for Render checks)
+// Security headers
+app.use(helmet());
+
+// CORS (lock to your frontend in prod via env)
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || "*",
+    credentials: true,
+}));
+
+// JSON body limit
+app.use(express.json({ limit: "200kb" }));
+
+// Minimal logging (less noisy in prod)
+app.use(morgan(process.env.NODE_ENV === "production" ? "tiny" : "dev"));
+
+/* ---------- Landing + health ---------- */
+
+// Redirect root to Swagger (nice DX)
+app.get("/", (_req, res) => res.redirect("/docs"));
+
+// Top-level health for Render checks
 app.get("/health", (_req, res) => {
     res.status(200).json({
         ok: true,
@@ -28,29 +43,40 @@ app.get("/health", (_req, res) => {
     });
 });
 
-app.use(express.json());
-app.use(cors());
-app.use(morgan("dev"));
-app.use(helmet());
-app.use(
-    rateLimit({
-        windowMs: 60 * 1000,
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-    })
-);
-
+// Namespaced health (keep if already referenced)
 app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", time: new Date().toISOString() });
 });
+
+/* ---------- Rate limiting (apply to write-heavy routes) ---------- */
+
+const writeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: 200,                 // tune as you like
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// auth and write endpoints
+app.use("/api/users", writeLimiter);
+app.use("/api/trips", writeLimiter);
+app.use("/api/expenses", writeLimiter);
+
+/* ---------- Routes ---------- */
 
 app.use("/api/users", userRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/docs", swaggerServe, swaggerSetup);
 
-// error handler last
+/* ---------- 404 + Error handling ---------- */
+
+// 404 fallback (after all routes)
+app.use((req, res) => {
+    return res.status(404).json({ error: "Not found" });
+});
+
+// Centralized error handler (keep yours last)
 app.use(errorHandler);
 
 export default app;

@@ -51,27 +51,24 @@ export const registerUser = async (req, res) => {
 };
 
 // GET /api/users/me
+
+
 export const getUserProfile = async (req, res) => {
     try {
-        // req.user is set by verifyToken middleware
-        const user = req.user;
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Send only safe info back
-        res.json({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            created_at: user.created_at,
-        });
-    } catch (error) {
-        console.error("Error in getUserProfile:", error);
-        res.status(500).json({ message: "Failed to load user profile" });
+        // req.user is set by verifyToken: { id, email }
+        const { id } = req.user;
+        const q = await pool.query(
+            "SELECT id, name, email, created_at FROM users WHERE id = $1::uuid",
+            [id]
+        );
+        if (!q.rows.length) return res.status(404).json({ message: "User not found" });
+        return res.status(200).json(q.rows[0]);
+    } catch (err) {
+        console.error("Error in getUserProfile:", err);
+        return res.status(500).json({ message: "Failed to load user profile" });
     }
 };
+
 
 
 // POST /api/users/login

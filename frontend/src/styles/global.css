@@ -1,0 +1,129 @@
+/* ============ GLOBAL THEME ============ */
+:root {
+    --primary: #6a0dad;
+    --primary-hover: #580b9e;
+    --bg: #f8f9fa;
+    --text: #222;
+    --card-bg: #fff;
+    --border: #ddd;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    margin: 0;
+    font-family: "Inter", "Poppins", sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+/* ============ LAYOUT HELPERS ============ */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* ============ BUTTONS ============ */
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--primary-hover);
+}
+
+/* ============ INPUTS ============ */
+input,
+textarea {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    font-size: 0.95rem;
+    width: 100%;
+    background: #fff;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* ============ CARDS ============ */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+}
+
+/* ============ NAVBAR ============ */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.nav-links a {
+    margin: 0 1rem;
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    text-decoration: underline;
+}
+
+/* ============ GRID LAYOUTS ============ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+    margin-top: 1rem;
+}
+
+.trip-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+}
+
+/* ============ RESPONSIVE NAV ============ */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        margin-top: 10px;
+    }
+}
+
+/* ============ BUTTON ============ */
+.button[type="submit"] {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}

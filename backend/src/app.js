@@ -17,17 +17,22 @@ const app = express();
 // Security headers
 app.use(helmet());
 
-// CORS (lock to your frontend in prod via env)
+// Enable CORS **before** anything else (especially rate limiter)
 app.use(cors({
     origin: process.env.CORS_ORIGIN || "*",
-    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// Allow preflight responses explicitly
+app.options("*", cors());
 
 // JSON body limit
 app.use(express.json({ limit: "200kb" }));
 
-// Minimal logging (less noisy in prod)
+// Logging
 app.use(morgan(process.env.NODE_ENV === "production" ? "tiny" : "dev"));
+
 
 /* ---------- Landing + health ---------- */
 

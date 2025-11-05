@@ -87,19 +87,22 @@ export const createTrip = async (req, res) => {
       return res.status(400).json({ message: "End date must be after start date" });
     }
 
-    // 🔍 Overlap check (allow boundary touching)
+    // ✅ Overlap check that ALLOWS end == other.start or start == other.end
     const overlapCheck = await pool.query(
-      `
-      SELECT id, destination, start_date, end_date
-      FROM trips
-      WHERE user_id = $1
-      AND NOT (
-        $3::date <= start_date  -- new trip ends before another starts
-        OR $2::date >= end_date -- new trip starts after another ends
-      )
-      `,
-      [user_id, start_date, end_date]
+    `
+    SELECT id, destination, start_date, end_date
+    FROM trips
+    WHERE user_id = $1
+    AND id != $4
+    AND NOT (
+        $3::date < start_date  -- ends strictly before another starts
+        OR $2::date > end_date -- starts strictly after another ends
+    )
+    `,
+    [user_id, newStart, newEnd, id]
     );
+
+
 
     if (overlapCheck.rows.length > 0) {
       const t = overlapCheck.rows[0];
@@ -159,18 +162,20 @@ export const updateTrip = async (req, res) => {
 
     // 3) Overlap check vs other trips (exclude this one). Allow boundary touch.
     const overlapCheck = await pool.query(
-      `
-      SELECT id, destination, start_date, end_date
-      FROM trips
-      WHERE user_id = $1
-      AND id != $4
-      AND NOT (
-        $3::date <= start_date  -- new trip ends before another starts
-        OR $2::date >= end_date -- new trip starts after another ends
-      )
-      `,
-      [user_id, newStart, newEnd, id]
+    `
+    SELECT id, destination, start_date, end_date
+    FROM trips
+    WHERE user_id = $1
+    AND id != $4
+    AND NOT (
+        $3::date < start_date  -- ends strictly before another starts
+        OR $2::date > end_date -- starts strictly after another ends
+    )
+    `,
+    [user_id, newStart, newEnd, id]
     );
+
+
 
     if (overlapCheck.rows.length > 0) {
       const t = overlapCheck.rows[0];

@@ -186,7 +186,38 @@ export default function TripDetails() {
 
 
 
-                    <h3 style={{ marginTop: 24 }}>Expenses</h3>
+                    <h3 style={{ marginTop: 24 }}>
+                        Expenses{" "}
+                        {expenses.length > 0 && (
+                            <>
+                                <span style={{ fontWeight: 500, fontSize: "1rem", color: "#555" }}>
+                                    — Total Spent: $
+                                    {expenses
+                                        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+                                        .toFixed(2)}
+                                </span>
+                                <br />
+                                <span
+                                    style={{
+                                        fontWeight: 500,
+                                        fontSize: "0.95rem",
+                                        color:
+                                            expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0) >
+                                                trip.budget
+                                                ? "red"
+                                                : "green",
+                                    }}
+                                >
+                                    Budget Left: $
+                                    {(
+                                        trip.budget -
+                                        expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+                                    ).toFixed(2)}
+                                </span>
+                            </>
+                        )}
+                    </h3>
+
                     {expenses.length === 0 ? (
                         <p>No expenses yet.</p>
                     ) : (
@@ -201,14 +232,15 @@ export default function TripDetails() {
                                         alignItems: "center",
                                         padding: "12px 16px",
                                         marginBottom: "10px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        backgroundColor: "#fff",
                                     }}
                                 >
                                     <div>
                                         <strong>{ex.category || "Expense"}</strong>
                                         {ex.amount !== undefined && <span> — ${ex.amount}</span>}
-                                        {ex.date && (
-                                            <span style={{ opacity: 0.7 }}> on {ex.date.slice(0, 10)}</span>
-                                        )}
+                                        {ex.date && <span style={{ opacity: 0.7 }}> on {ex.date.slice(0, 10)}</span>}
                                         {ex.description && (
                                             <div style={{ marginTop: "4px", fontSize: "0.9rem", opacity: 0.8 }}>
                                                 {ex.description}
@@ -220,6 +252,8 @@ export default function TripDetails() {
                             ))}
                         </ul>
                     )}
+
+
 
                 </>
             ) : (

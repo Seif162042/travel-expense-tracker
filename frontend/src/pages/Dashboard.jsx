@@ -59,11 +59,11 @@ export default function Dashboard() {
         setErr("");
         try {
             const res = await api.post("/trips", {
+                title: form.destination, // ✅ use destination as title
                 destination: form.destination,
                 start_date: form.start_date,
                 end_date: form.end_date,
                 budget: Number(form.budget),
-                notes: form.notes,
             });
 
             setTrips((prev) => [res.data, ...prev]);

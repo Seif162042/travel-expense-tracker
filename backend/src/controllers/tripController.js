@@ -11,11 +11,13 @@ export const getFeedTrips = async (req, res) => {
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
         const q = await pool.query(
-            `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
-         FROM trips
-         WHERE user_id != $1
-         ORDER BY created_at DESC
-         LIMIT 50`,
+            `SELECT t.id, t.user_id, u.name AS user_name, t.title, t.destination,
+              t.start_date, t.end_date, t.budget, t.created_at
+       FROM trips t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.user_id != $1
+       ORDER BY t.created_at DESC
+       LIMIT 50`,
             [user_id]
         );
 
@@ -25,6 +27,7 @@ export const getFeedTrips = async (req, res) => {
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch feed");
     }
 };
+
 
 // GET /api/trips
 export const getTrips = async (req, res) => {

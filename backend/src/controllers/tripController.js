@@ -6,18 +6,25 @@ import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 // GET /api/trips
 export const getTrips = async (req, res) => {
     try {
+        const user_id = req.user?.id; // get the user ID from token
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
         const result = await pool.query(
             `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
-       FROM trips
-       ORDER BY created_at DESC
-       LIMIT 50`
+             FROM trips
+             WHERE user_id = $1
+             ORDER BY created_at DESC
+             LIMIT 50`,
+            [user_id]
         );
+
         return res.status(HTTP_STATUS.OK).json(result.rows);
     } catch (err) {
-        console.error(err);
+        console.error("Error fetching user trips:", err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trips");
     }
 };
+
 
 // GET /api/trips/:id
 export const getTripById = async (req, res) => {

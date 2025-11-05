@@ -70,8 +70,8 @@ export default function TripDetails() {
                 category: form.category,
                 amount: Number(form.amount),
                 description: form.description || null,
-                date: form.date || null,
-                end_date: form.end_date || null, // ✅ added multi-day support
+                date: form.date ? new Date(form.date).toISOString().slice(0, 10) : null,
+                end_date: form.end_date ? new Date(form.end_date).toISOString().slice(0, 10) : null,
             });
 
             const newExpense = res.data.data || res.data;

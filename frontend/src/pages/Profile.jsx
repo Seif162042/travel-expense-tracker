@@ -10,7 +10,7 @@ export default function Profile() {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const res = await api.get("/users/profile");
+                const res = await api.get("/users/me");
                 setProfile(res.data);
             } catch (err) {
                 console.error(err);

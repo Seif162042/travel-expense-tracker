@@ -89,21 +89,20 @@ export const createTrip = async (req, res) => {
       return res.status(400).json({ message: "End date must be after start date" });
     }
 
-    // 🔍 Check for overlapping trips
+    // Check for overlapping trips (allow exact end/start match)
     const overlapCheck = await pool.query(
-      `
-      SELECT id, destination, start_date, end_date
-      FROM trips
-      WHERE user_id = $1
-      AND (
-        ($2 BETWEEN start_date AND end_date)
-        OR ($3 BETWEEN start_date AND end_date)
-        OR (start_date BETWEEN $2 AND $3)
-        OR (end_date BETWEEN $2 AND $3)
-      )
-      `,
-      [user_id, start_date, end_date]
+    `
+    SELECT id, destination, start_date, end_date
+    FROM trips
+    WHERE user_id = $1
+    AND NOT (
+        $3 <= start_date  -- new trip ends before another starts
+        OR $2 >= end_date -- new trip starts after another ends
+    )
+    `,
+    [user_id, start_date, end_date]
     );
+
 
     if (overlapCheck.rows.length > 0) {
       const overlappingTrip = overlapCheck.rows[0];
@@ -112,7 +111,7 @@ export const createTrip = async (req, res) => {
       });
     }
 
-    // ✅ Insert trip
+    // Insert trip
     const result = await pool.query(
       `
       INSERT INTO trips (user_id, title, destination, start_date, end_date, budget)

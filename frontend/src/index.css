@@ -40,3 +40,14 @@ button[type="submit"] {
     padding: 1rem;
   }
 }
+
+/* Collapsible */
+.collapsible {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.4s ease;
+}
+
+.collapsible.open {
+  max-height: 800px; /* enough for your charts */
+}

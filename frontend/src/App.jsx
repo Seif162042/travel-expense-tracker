@@ -7,6 +7,8 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Feed from "./pages/Feed";
+import Analytics from "./pages/Analytics";
+
 
 
 
@@ -45,6 +47,8 @@ function App() {
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/analytics" element={<Analytics />} />
+
 
       <Route
         path="/trips/:id"

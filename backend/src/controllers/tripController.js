@@ -73,30 +73,60 @@ export const getTripById = async (req, res) => {
 
 // POST /api/trips
 export const createTrip = async (req, res) => {
-    try {
-        const { title, destination, budget } = req.body;
-        const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
-        if (!title || !destination) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
+  try {
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-        // accept both snake_case and camelCase
-        const startDate = req.body.start_date ?? req.body.startDate ?? null;
-        const endDate = req.body.end_date ?? req.body.endDate ?? null;
+    const { title, destination, start_date, end_date, budget } = req.body;
 
-        const result = await pool.query(
-            `INSERT INTO trips (user_id, title, destination, start_date, end_date, budget)
-       VALUES ($1, $2, $3, $4::date, $5::date, $6)
-       RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at`,
-            [user_id, title, destination, startDate, endDate, budget ?? null]
-        );
-
-        return successResponse(res, HTTP_STATUS.CREATED, result.rows[0], SUCCESS_MESSAGES.TRIP_CREATED);
-    } catch (err) {
-        console.error(err);
-        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create trip");
+    // Basic required field validation
+    if (!destination || !start_date || !end_date) {
+      return res.status(400).json({ message: "All fields required" });
     }
+
+    // Ensure end date is after start date
+    if (new Date(end_date) < new Date(start_date)) {
+      return res.status(400).json({ message: "End date must be after start date" });
+    }
+
+    // 🔍 Check for overlapping trips
+    const overlapCheck = await pool.query(
+      `
+      SELECT id, destination, start_date, end_date
+      FROM trips
+      WHERE user_id = $1
+      AND (
+        ($2 BETWEEN start_date AND end_date)
+        OR ($3 BETWEEN start_date AND end_date)
+        OR (start_date BETWEEN $2 AND $3)
+        OR (end_date BETWEEN $2 AND $3)
+      )
+      `,
+      [user_id, start_date, end_date]
+    );
+
+    if (overlapCheck.rows.length > 0) {
+      const overlappingTrip = overlapCheck.rows[0];
+      return res.status(400).json({
+        message: `Trip overlaps with existing trip (${overlappingTrip.destination}) from ${overlappingTrip.start_date.slice(0, 10)} to ${overlappingTrip.end_date.slice(0, 10)}.`,
+      });
+    }
+
+    // ✅ Insert trip
+    const result = await pool.query(
+      `
+      INSERT INTO trips (user_id, title, destination, start_date, end_date, budget)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at
+      `,
+      [user_id, title, destination, start_date, end_date, budget]
+    );
+
+    return res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error creating trip:", err);
+    return res.status(500).json({ message: "Failed to create trip" });
+  }
 };
 
 // PUT /api/trips/:id

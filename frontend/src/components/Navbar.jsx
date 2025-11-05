@@ -33,6 +33,7 @@ export default function Navbar() {
 
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <Link to="/analytics">Analytics</Link>
                 <Link to="/Dashboard">Dashboard</Link>
                 <Link to="/profile">Profile</Link>
                 {user && <span style={{ opacity: 0.8 }}>Hi, {user.name}</span>}

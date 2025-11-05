@@ -28,12 +28,12 @@ export default function Navbar() {
                 </Link>
             </div>
             <div>
-                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/feed">Feed</Link>
             </div>
 
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <Link to="/feed">Feed</Link>
+                <Link to="/Dashboard">Dashboard</Link>
                 <Link to="/profile">Profile</Link>
                 {user && <span style={{ opacity: 0.8 }}>Hi, {user.name}</span>}
                 <button onClick={doLogout}>Logout</button>

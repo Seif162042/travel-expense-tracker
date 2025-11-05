@@ -21,7 +21,7 @@ export default function TripDetails() {
         try {
             const [tRes, eRes] = await Promise.all([
                 api.get(`/trips/${id}`),
-                api.get(`/expenses/trip/${id}`), // ✅ Corrected route
+                api.get(`/expenses/trip/${id}`),
             ]);
             setTrip(tRes.data);
             setExpenses(eRes.data);
@@ -70,6 +70,7 @@ export default function TripDetails() {
         }
     };
 
+    // ===== UI =====//
     if (loading) return <p>Loading…</p>;
 
     return (
@@ -90,9 +91,15 @@ export default function TripDetails() {
                     {trip.notes && <p>Notes: {trip.notes}</p>}
 
                     <h3 style={{ marginTop: 24 }}>Add expense</h3>
+
                     <form
                         onSubmit={addExpense}
-                        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 600 }}
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "12px",
+                            width: "100%",
+                        }}
                     >
                         <input
                             name="category"
@@ -100,6 +107,14 @@ export default function TripDetails() {
                             value={form.category}
                             onChange={onChange}
                             required
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                                fontSize: "1rem",
+                                boxSizing: "border-box",
+                            }}
                         />
                         <input
                             type="number"
@@ -108,53 +123,99 @@ export default function TripDetails() {
                             value={form.amount}
                             onChange={onChange}
                             required
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                                fontSize: "1rem",
+                                boxSizing: "border-box",
+                            }}
                         />
                         <input
                             name="description"
                             placeholder="Description (optional)"
                             value={form.description}
                             onChange={onChange}
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                                fontSize: "1rem",
+                                boxSizing: "border-box",
+                            }}
                         />
                         <input
                             type="date"
                             name="date"
                             value={form.date}
                             onChange={onChange}
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                border: "1px solid #ccc",
+                                fontSize: "1rem",
+                                boxSizing: "border-box",
+                            }}
                         />
-                        <button type="submit" style={{ gridColumn: "1 / -1" }}>
+                        <button
+                            type="submit"
+                            style={{
+                                gridColumn: "1 / -1",
+                                padding: "12px",
+                                backgroundColor: "var(--primary)",
+                                borderRadius: "8px",
+                                color: "white",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                border: "none",
+                            }}
+                            onMouseOver={(e) => (e.target.style.backgroundColor = "var(--primary-hover)")}
+                            onMouseOut={(e) => (e.target.style.backgroundColor = "var(--primary)")}
+                        >
                             Add Expense
                         </button>
                     </form>
+
+
 
                     <h3 style={{ marginTop: 24 }}>Expenses</h3>
                     {expenses.length === 0 ? (
                         <p>No expenses yet.</p>
                     ) : (
-                        <ul style={{ padding: 0, listStyle: "none" }}>
+                        <ul style={{ padding: 0, listStyle: "none", marginTop: "1rem" }}>
                             {expenses.map((ex) => (
                                 <li
                                     key={ex.id}
+                                    className="card"
                                     style={{
                                         display: "flex",
                                         justifyContent: "space-between",
-                                        border: "1px solid #ddd",
-                                        padding: 10,
-                                        borderRadius: 6,
-                                        marginBottom: 8,
+                                        alignItems: "center",
+                                        padding: "12px 16px",
+                                        marginBottom: "10px",
                                     }}
                                 >
                                     <div>
-                                        <strong>{ex.category}</strong> — ${ex.amount}
+                                        <strong>{ex.category || "Expense"}</strong>
+                                        {ex.amount !== undefined && <span> — ${ex.amount}</span>}
                                         {ex.date && (
                                             <span style={{ opacity: 0.7 }}> on {ex.date.slice(0, 10)}</span>
                                         )}
-                                        {ex.description && <div>{ex.description}</div>}
+                                        {ex.description && (
+                                            <div style={{ marginTop: "4px", fontSize: "0.9rem", opacity: 0.8 }}>
+                                                {ex.description}
+                                            </div>
+                                        )}
                                     </div>
                                     <button onClick={() => removeExpense(ex.id)}>Delete</button>
                                 </li>
                             ))}
                         </ul>
                     )}
+
                 </>
             ) : (
                 <p>Trip not found.</p>

@@ -88,7 +88,7 @@ export default function Dashboard() {
         }
     };
 
-    // ===== UI =====
+    // ===== UI =====//
     if (loading) return <p>Loading...</p>;
 
     return (

@@ -55,7 +55,7 @@ export const createExpense = async (req, res) => {
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
         const { trip_id, description, amount, category, date } = req.body;
-        if (!trip_id || !description || amount == null) {
+        if (!trip_id || amount == null) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 

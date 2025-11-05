@@ -1,6 +1,8 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -15,7 +17,7 @@ export default function Login() {
 
         try {
             await login(email, password); // Calls AuthContext login()
-            navigate("/trips"); // Redirect to trips on success
+            navigate("/feed");// Redirect on success
         } catch (err) {
             console.error(err);
             setError("Invalid email or password");
@@ -57,6 +59,12 @@ export default function Login() {
                     Login
                 </button>
             </form>
+            <p style={{ marginTop: "1rem", textAlign: "center" }}>
+                Don’t have an account?{" "}
+                <Link to="/register" style={{ color: "purple", textDecoration: "underline" }}>
+                    Register here
+                </Link>
+            </p>
             {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
     );

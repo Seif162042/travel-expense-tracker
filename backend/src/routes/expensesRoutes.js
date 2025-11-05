@@ -1,7 +1,8 @@
+// backend/src/routes/expenseRoutes.js
 import express from "express";
 import { body, param, query } from "express-validator";
 import { verifyToken } from "../middleware/authMiddleware.js";
-import { handleValidationErrors } from "../middleware/validate.js";
+import { handleValidationErrors, emptyToUndefined } from "../middleware/validate.js";
 import {
     createExpense,
     getExpenses,
@@ -12,19 +13,11 @@ import {
 
 const router = express.Router();
 
-const emptyToUndefined = (req, _res, next) => {
-    if (req.body && typeof req.body === "object") {
-        for (const k of ["trip_id", "amount", "category", "description", "date", "end_date"]) {
-            if (req.body[k] === "") req.body[k] = undefined;
-        }
-    }
-    next();
-};
-
 /**
  * @swagger
  * tags:
  *   - name: Expenses
+ *     description: Endpoints for managing trip expenses
  */
 
 /**
@@ -33,7 +26,8 @@ const emptyToUndefined = (req, _res, next) => {
  *   get:
  *     summary: List expenses (optionally filter by trip_id)
  *     tags: [Expenses]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: trip_id
@@ -60,7 +54,8 @@ router.get(
  *   get:
  *     summary: List expenses for a specific trip
  *     tags: [Expenses]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: trip_id
@@ -86,7 +81,8 @@ router.get(
  *   post:
  *     summary: Create an expense (supports multi-day via end_date)
  *     tags: [Expenses]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -95,12 +91,25 @@ router.get(
  *             type: object
  *             required: [trip_id, amount, category]
  *             properties:
- *               trip_id: { type: string, format: uuid }
- *               amount: { type: number }
- *               category: { type: string, example: "Hotel" }
- *               description: { type: string, nullable: true }
- *               date: { type: string, format: date, description: "Start date of expense" }
- *               end_date: { type: string, format: date, description: "Optional end date for multi-day expenses" }
+ *               trip_id:
+ *                 type: string
+ *                 format: uuid
+ *               amount:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *                 example: Hotel
+ *               description:
+ *                 type: string
+ *                 nullable: true
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 description: Start date of expense
+ *               end_date:
+ *                 type: string
+ *                 format: date
+ *                 description: Optional end date for multi-day expenses
  *           example:
  *             trip_id: "705e6e02-0b93-4521-aa90-892625f37a8a"
  *             amount: 320.00
@@ -123,8 +132,8 @@ router.post(
         body("amount").isNumeric().withMessage("amount must be a number").toFloat(),
         body("category").isString().trim().notEmpty().withMessage("category is required"),
         body("description").optional().isString().trim(),
-        body("date").optional().isISO8601().withMessage("Invalid start date"),
-        body("end_date").optional().isISO8601().withMessage("Invalid end date"),
+        body("date").optional().isISO8601().withMessage("Invalid start date (YYYY-MM-DD)"),
+        body("end_date").optional().isISO8601().withMessage("Invalid end date (YYYY-MM-DD)"),
         handleValidationErrors,
     ],
     createExpense
@@ -136,12 +145,15 @@ router.post(
  *   put:
  *     summary: Update an expense
  *     tags: [Expenses]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -155,8 +167,10 @@ router.post(
  *               date: { type: string, format: date }
  *               end_date: { type: string, format: date }
  *     responses:
- *       200: { description: Updated }
- *       404: { description: Not found }
+ *       200:
+ *         description: Updated
+ *       404:
+ *         description: Not found
  */
 router.put(
     "/:id",
@@ -180,15 +194,20 @@ router.put(
  *   delete:
  *     summary: Delete an expense
  *     tags: [Expenses]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string, format: uuid }
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
- *       200: { description: Deleted }
- *       404: { description: Not found }
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
  */
 router.delete(
     "/:id",

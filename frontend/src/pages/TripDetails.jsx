@@ -13,6 +13,7 @@ export default function TripDetails() {
         amount: "",
         description: "",
         date: "",
+        end_date: "",
     });
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState("");
@@ -45,14 +46,20 @@ export default function TripDetails() {
     const addExpense = async (e) => {
         e.preventDefault();
         setErr("");
+
         // ===== Date validation =====
         if (form.date) {
             const expenseDate = new Date(form.date);
-            const startDate = new Date(trip.start_date);
-            const endDate = new Date(trip.end_date);
+            const endDate = form.end_date ? new Date(form.end_date) : expenseDate;
+            const tripStart = new Date(trip.start_date);
+            const tripEnd = new Date(trip.end_date);
 
-            if (expenseDate < startDate || expenseDate > endDate) {
-                setErr("Expense date must be within the trip duration.");
+            if (expenseDate < tripStart || endDate > tripEnd) {
+                setErr("Expense dates must be within the trip duration.");
+                return;
+            }
+            if (endDate < expenseDate) {
+                setErr("Expense end date cannot be before start date.");
                 return;
             }
         }
@@ -64,13 +71,12 @@ export default function TripDetails() {
                 amount: Number(form.amount),
                 description: form.description || null,
                 date: form.date || null,
+                end_date: form.end_date || null, // ✅ added multi-day support
             });
 
-            // ✅ handle successResponse wrapper correctly
             const newExpense = res.data.data || res.data;
-
             setExpenses((prev) => [newExpense, ...prev]);
-            setForm({ category: "", amount: "", description: "", date: "" });
+            setForm({ category: "", amount: "", description: "", date: "", end_date: "" });
         } catch (e2) {
             setErr(e2.response?.data?.message || "Failed to add expense");
         }
@@ -99,7 +105,6 @@ export default function TripDetails() {
         "#F94144", // Red
     ];
 
-    // This map keeps track of assigned colors per category
     const [colorAssignments, setColorAssignments] = useState({});
 
     useEffect(() => {
@@ -112,7 +117,6 @@ export default function TripDetails() {
             expenses.forEach((ex) => {
                 const category = ex.category || "Uncategorized";
                 if (!newAssignments[category]) {
-                    // Assign next unused color (loop if all colors used)
                     newAssignments[category] = baseColors[colorIndex % baseColors.length];
                     colorIndex++;
                 }
@@ -121,7 +125,6 @@ export default function TripDetails() {
             return newAssignments;
         });
     }, [expenses]);
-
 
     // ✅ Prepare chart data from expenses
     const chartData = Object.values(
@@ -221,6 +224,24 @@ export default function TripDetails() {
                                 boxSizing: "border-box",
                             }}
                         />
+                        {/* ✅ End date only appears for hotels */}
+                        {form.category.toLowerCase() === "hotel" && (
+                            <input
+                                type="date"
+                                name="end_date"
+                                value={form.end_date || ""}
+                                onChange={onChange}
+                                placeholder="End date"
+                                style={{
+                                    width: "100%",
+                                    padding: "10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #ccc",
+                                    fontSize: "1rem",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        )}
                         <button
                             type="submit"
                             style={{
@@ -279,10 +300,12 @@ export default function TripDetails() {
                                         {chartData.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={colorAssignments[entry.name] || baseColors[index % baseColors.length]}
+                                                fill={
+                                                    colorAssignments[entry.name] ||
+                                                    baseColors[index % baseColors.length]
+                                                }
                                             />
                                         ))}
-
                                     </Pie>
                                     <Tooltip
                                         formatter={(value, name) => [`$${value}`, name]}
@@ -375,6 +398,9 @@ export default function TripDetails() {
                                             <span style={{ opacity: 0.7 }}>
                                                 {" "}
                                                 on {ex.date.slice(0, 10)}
+                                                {ex.end_date
+                                                    ? ` → ${ex.end_date.slice(0, 10)}`
+                                                    : ""}
                                             </span>
                                         )}
                                         {ex.description && (

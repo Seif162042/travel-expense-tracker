@@ -1,8 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -14,10 +12,9 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-
         try {
-            await login(email, password); // Calls AuthContext login()
-            navigate("/feed");// Redirect on success
+            await login(email, password);
+            navigate("/feed");
         } catch (err) {
             console.error(err);
             setError("Invalid email or password");
@@ -31,41 +28,85 @@ export default function Login() {
                 justifyContent: "center",
                 alignItems: "center",
                 height: "100vh",
-                flexDirection: "column",
+                backgroundColor: "var(--bg)",
             }}
         >
-            <h2>Login to Your Account</h2>
-            <form
-                onSubmit={handleSubmit}
-                style={{ display: "flex", flexDirection: "column", width: "300px" }}
+            <div
+                className="card"
+                style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                    padding: "2rem",
+                    textAlign: "center",
+                }}
             >
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={{ marginBottom: "10px", padding: "8px" }}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={{ marginBottom: "10px", padding: "8px" }}
-                />
-                <button type="submit" style={{ padding: "8px", cursor: "pointer" }}>
-                    Login
-                </button>
-            </form>
-            <p style={{ marginTop: "1rem", textAlign: "center" }}>
-                Don’t have an account?{" "}
-                <Link to="/register" style={{ color: "purple", textDecoration: "underline" }}>
-                    Register here
-                </Link>
-            </p>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+                <h2 style={{ marginBottom: "1.5rem" }}>Login to Your Account</h2>
+
+                <form
+                    onSubmit={handleSubmit}
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                    }}
+                >
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        style={{
+                            fontWeight: "600",
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                            fontSize: "1rem",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{
+                            fontWeight: "600",
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                            fontSize: "1rem",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <button
+                        type="submit"
+                        style={{
+                            padding: "10px",
+                            fontWeight: "600",
+                        }}
+                    >
+                        Login
+                    </button>
+                </form>
+
+                {error && (
+                    <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+                )}
+
+                <p style={{ marginTop: "1rem" }}>
+                    Don’t have an account?{" "}
+                    <Link
+                        to="/register"
+                        style={{ color: "var(--primary)", fontWeight: "500" }}
+                    >
+                        Register here
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }

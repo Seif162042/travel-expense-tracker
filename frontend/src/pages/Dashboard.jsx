@@ -126,18 +126,19 @@ export default function Dashboard() {
             {trips.length === 0 ? (
                 <p>No trips yet. Add your first one below!</p>
             ) : (
-                <ul style={{ padding: 0, listStyle: "none" }}>
+                <ul style={{ padding: 0, listStyle: "none", marginBottom: "2rem" }}>
                     {trips.map((trip) => (
                         <li
                             key={trip.id}
                             style={{
                                 border: "1px solid #ddd",
-                                padding: "10px",
+                                padding: "10px 14px",
                                 borderRadius: 6,
                                 marginBottom: 8,
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
+                                background: "#fff",
                             }}
                         >
                             <div>
@@ -162,7 +163,12 @@ export default function Dashboard() {
             <h3 style={{ marginTop: 30 }}>Add New Trip</h3>
             <form
                 onSubmit={handleSubmit}
-                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    width: "100%",
+                }}
             >
                 <input
                     name="destination"
@@ -170,6 +176,14 @@ export default function Dashboard() {
                     value={form.destination}
                     onChange={handleChange}
                     required
+                    style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        fontSize: "1rem",
+                        boxSizing: "border-box",
+                    }}
                 />
                 <input
                     type="number"
@@ -178,6 +192,14 @@ export default function Dashboard() {
                     value={form.budget}
                     onChange={handleChange}
                     required
+                    style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        fontSize: "1rem",
+                        boxSizing: "border-box",
+                    }}
                 />
                 <input
                     type="date"
@@ -185,6 +207,14 @@ export default function Dashboard() {
                     value={form.start_date}
                     onChange={handleChange}
                     required
+                    style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        fontSize: "1rem",
+                        boxSizing: "border-box",
+                    }}
                 />
                 <input
                     type="date"
@@ -192,15 +222,46 @@ export default function Dashboard() {
                     value={form.end_date}
                     onChange={handleChange}
                     required
+                    style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        fontSize: "1rem",
+                        boxSizing: "border-box",
+                    }}
                 />
                 <textarea
                     name="notes"
                     placeholder="Notes (optional)"
                     value={form.notes}
                     onChange={handleChange}
-                    style={{ gridColumn: "1 / -1" }}
+                    style={{
+                        gridColumn: "1 / -1",
+                        width: "100%",
+                        minHeight: "70px",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                        fontSize: "1rem",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                    }}
                 />
-                <button type="submit" style={{ gridColumn: "1 / -1" }}>
+                <button
+                    type="submit"
+                    style={{
+                        gridColumn: "1 / -1",
+                        width: "100%",
+                        padding: "10px",
+                        backgroundColor: "var(--primary)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                    }}
+                >
                     Add Trip
                 </button>
             </form>

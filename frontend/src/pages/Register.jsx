@@ -1,64 +1,125 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 export default function Register() {
-    const [form, setForm] = useState({ name: "", email: "", password: "" });
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [ok, setOk] = useState(false);
     const navigate = useNavigate();
 
-    const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-    const onSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-        setOk(false);
         try {
-            await api.post("/users/register", form);
-            setOk(true);
-            // give a tiny moment then go to login
-            setTimeout(() => navigate("/login"), 600);
+            await api.post("/users/register", { name, email, password });
+            navigate("/login");
         } catch (err) {
-            const msg = err.response?.data?.message || "Registration failed";
-            setError(msg);
+            console.error(err);
+            setError("Registration failed. Please try again.");
         }
     };
 
     return (
-        <div style={{ maxWidth: 360, margin: "5rem auto" }}>
-            <h2>Create account</h2>
-            <form onSubmit={onSubmit} style={{ display: "grid", gap: 10 }}>
-                <input
-                    name="name"
-                    placeholder="Name"
-                    value={form.name}
-                    onChange={onChange}
-                    required
-                />
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={form.email}
-                    onChange={onChange}
-                    required
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={onChange}
-                    required
-                />
-                <button type="submit">Sign up</button>
-            </form>
-            {ok && <p style={{ color: "green" }}>Account created — redirecting…</p>}
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <p style={{ marginTop: 10 }}>
-                Already have an account? <Link to="/login">Login</Link>
-            </p>
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh",
+                backgroundColor: "var(--bg)",
+            }}
+        >
+            <div
+                className="card"
+                style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                    padding: "2rem",
+                    textAlign: "center",
+                }}
+            >
+                <h2 style={{ marginBottom: "1.5rem" }}>Create Your Account</h2>
+
+                <form
+                    onSubmit={handleSubmit}
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                    }}
+                >
+                    <input
+                        type="text"
+                        placeholder="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        style={{
+                            width: "100%",
+                            fontWeight: "600",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                            fontSize: "1rem",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        style={{
+                            width: "100%",
+                            fontWeight: "600",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                            fontSize: "1rem",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{
+                            width: "100%",
+                            fontWeight: "600",
+                            borderRadius: "6px",
+                            border: "1px solid #ccc",
+                            fontSize: "1rem",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <button
+                        type="submit"
+                        style={{
+                            padding: "10px",
+                            fontWeight: "600",
+                        }}
+                    >
+                        Sign Up
+                    </button>
+                </form>
+
+                {error && (
+                    <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+                )}
+
+                <p style={{ marginTop: "1rem" }}>
+                    Already have an account?{" "}
+                    <Link
+                        to="/login"
+                        style={{ color: "var(--primary)", fontWeight: "500" }}
+                    >
+                        Login
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }

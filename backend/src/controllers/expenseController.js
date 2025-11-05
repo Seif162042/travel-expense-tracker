@@ -23,6 +23,30 @@ export const getExpenses = async (req, res) => {
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch expenses");
     }
 };
+// GET /api/expenses/trip/:trip_id (requires verifyToken)
+export const getExpensesByTripId = async (req, res) => {
+    try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const { trip_id } = req.params;
+        if (!trip_id) return res.status(400).json({ message: "trip_id is required" });
+
+        const q = await pool.query(
+            `SELECT id, user_id, trip_id, description, amount, category, date, created_at
+             FROM expenses
+             WHERE user_id = $1 AND trip_id = $2
+             ORDER BY created_at DESC`,
+            [user_id, trip_id]
+        );
+
+        return res.status(HTTP_STATUS.OK).json(q.rows);
+    } catch (err) {
+        console.error("Error fetching expenses by trip_id:", err);
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch expenses for trip");
+    }
+};
+
 
 // POST /api/expenses (requires verifyToken)
 export const createExpense = async (req, res) => {

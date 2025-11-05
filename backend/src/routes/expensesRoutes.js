@@ -7,6 +7,7 @@ import {
     getExpenses,
     updateExpense,
     deleteExpense,
+    getExpensesByTripId,
 } from "../controllers/expenseController.js";
 
 const router = express.Router();
@@ -155,5 +156,15 @@ router.delete(
     handleValidationErrors,
     deleteExpense
 );
+
+// GET /api/expenses/trip/:trip_id (requires verifyToken)
+router.get(
+    "/trip/:trip_id",
+    verifyToken,
+    param("trip_id").isUUID().withMessage("trip_id must be a valid UUID"),
+    handleValidationErrors,
+    getExpensesByTripId
+);
+
 
 export default router;

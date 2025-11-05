@@ -21,16 +21,18 @@ export default function TripDetails() {
         try {
             const [tRes, eRes] = await Promise.all([
                 api.get(`/trips/${id}`),
-                api.get(`/expenses/${id}`), // our GET /expenses/:trip_id
+                api.get(`/expenses/trip/${id}`), // ✅ Corrected route
             ]);
             setTrip(tRes.data);
             setExpenses(eRes.data);
         } catch (e) {
+            console.error("Error loading trip details:", e);
             setErr(e.response?.data?.message || "Failed to load trip");
         } finally {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         load();
@@ -74,7 +76,7 @@ export default function TripDetails() {
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
             <Navbar />
 
-            <Link to="/trips">{`← Back to trips`}</Link>
+            <Link to="/dashboard">{`← Back to trips`}</Link>
 
             {err && <p style={{ color: "red" }}>{err}</p>}
 

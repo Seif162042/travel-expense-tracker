@@ -7,6 +7,7 @@ import {
     getTripById,
     updateTrip,
     deleteTrip,
+    getFeedTrips,
 } from "../controllers/tripController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
@@ -71,6 +72,7 @@ const emptyToUndefined = (req, _res, next) => {
  *         description: List of trips
  */
 router.get("/", verifyToken, getTrips);
+router.get("/feed", verifyToken, getFeedTrips);
 
 /**
  * @swagger

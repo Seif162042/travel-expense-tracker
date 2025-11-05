@@ -3,27 +3,51 @@ import { pool } from "../db.js";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 
-// GET /api/trips
-export const getTrips = async (req, res) => {
+
+// GET /api/trips/feed
+export const getFeedTrips = async (req, res) => {
     try {
-        const user_id = req.user?.id; // get the user ID from token
+        const user_id = req.user?.id;
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-        const result = await pool.query(
+        const q = await pool.query(
             `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
-             FROM trips
-             WHERE user_id = $1
-             ORDER BY created_at DESC
-             LIMIT 50`,
+         FROM trips
+         WHERE user_id != $1
+         ORDER BY created_at DESC
+         LIMIT 50`,
             [user_id]
         );
 
-        return res.status(HTTP_STATUS.OK).json(result.rows);
+        return res.status(HTTP_STATUS.OK).json(q.rows);
+    } catch (err) {
+        console.error("Error fetching feed:", err);
+        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch feed");
+    }
+};
+
+// GET /api/trips
+export const getTrips = async (req, res) => {
+    try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+
+        const q = await pool.query(
+            `SELECT id, user_id, title, destination, start_date, end_date, budget, created_at
+         FROM trips
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 50`,
+            [user_id]
+        );
+
+        return res.status(HTTP_STATUS.OK).json(q.rows);
     } catch (err) {
         console.error("Error fetching user trips:", err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trips");
     }
 };
+
 
 
 // GET /api/trips/:id

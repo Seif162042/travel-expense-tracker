@@ -10,7 +10,7 @@ export default function Feed() {
     useEffect(() => {
         const fetchAllTrips = async () => {
             try {
-                const res = await api.get("/trips/all");
+                const res = await api.get("/trips");
                 setTrips(res.data);
             } catch (err) {
                 console.error(err);

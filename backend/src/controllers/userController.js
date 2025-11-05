@@ -50,6 +50,30 @@ export const registerUser = async (req, res) => {
     }
 };
 
+// GET /api/users/me
+export const getUserProfile = async (req, res) => {
+    try {
+        // req.user is set by verifyToken middleware
+        const user = req.user;
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Send only safe info back
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            created_at: user.created_at,
+        });
+    } catch (error) {
+        console.error("Error in getUserProfile:", error);
+        res.status(500).json({ message: "Failed to load user profile" });
+    }
+};
+
+
 // POST /api/users/login
 export const loginUser = async (req, res) => {
     try {

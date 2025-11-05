@@ -1,7 +1,7 @@
 import express from "express";
 import { body, param, query } from "express-validator";
 import { verifyToken } from "../middleware/authMiddleware.js";
-import { handleValidationErrors, emptyToUndefined } from "../middleware/validate.js";
+import { handleValidationErrors } from "../middleware/validate.js";
 import {
     createExpense,
     getExpenses,

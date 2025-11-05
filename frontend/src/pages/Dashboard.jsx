@@ -65,17 +65,13 @@ export default function Dashboard() {
     return;
   }
 
-  // Check overlap with existing trips
-  const overlap = trips.some((t) => {
+  // Check overlap with existing trips (allow touching boundaries)
+    const overlap = trips.some((t) => {
     const start = new Date(t.start_date);
     const end = new Date(t.end_date);
-    return (
-      (newStart >= start && newStart <= end) ||
-      (newEnd >= start && newEnd <= end) ||
-      (start >= newStart && start <= newEnd) ||
-      (end >= newStart && end <= newEnd)
-    );
-  });
+    return !(newEnd <= start || newStart >= end);
+    });
+
 
   if (overlap) {
     setErr("Trip dates overlap with an existing trip.");

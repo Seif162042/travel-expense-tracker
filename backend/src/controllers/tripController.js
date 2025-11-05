@@ -130,34 +130,71 @@ export const createTrip = async (req, res) => {
 
 // PUT /api/trips/:id
 export const updateTrip = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-        const { title, destination, budget } = req.body;
-        const startDate = req.body.start_date ?? req.body.startDate ?? null;
-        const endDate = req.body.end_date ?? req.body.endDate ?? null;
+    const { title, destination, start_date, end_date, budget } = req.body;
 
-        const result = await pool.query(
-            `UPDATE trips
-       SET title       = COALESCE($2, title),
-           destination = COALESCE($3, destination),
-           start_date  = COALESCE($4::date, start_date),
-           end_date    = COALESCE($5::date, end_date),
-           budget      = COALESCE($6, budget)
-       WHERE id = $1::uuid AND user_id = $7
-       RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at`,
-            [id, title ?? null, destination ?? null, startDate, endDate, budget ?? null, user_id]
-        );
-
-        if (!result.rows.length) return res.status(404).json({ message: "Trip not found or not yours" });
-        return res.status(HTTP_STATUS.OK).json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update trip");
+    // ✅ Check required fields
+    if (!destination || !start_date || !end_date) {
+      return res.status(400).json({ message: "All fields required" });
     }
+
+    // ✅ Ensure end date is after start date
+    if (new Date(end_date) < new Date(start_date)) {
+      return res.status(400).json({ message: "End date must be after start date" });
+    }
+
+    // 🔍 Check overlap with other trips (exclude this one + allow boundary touch)
+    const overlapCheck = await pool.query(
+      `
+      SELECT id, destination, start_date, end_date
+      FROM trips
+      WHERE user_id = $1
+      AND id != $4
+      AND NOT (
+        $3 <= start_date  -- new trip ends before another starts
+        OR $2 >= end_date -- new trip starts after another ends
+      )
+      `,
+      [user_id, start_date, end_date, id]
+    );
+
+    if (overlapCheck.rows.length > 0) {
+      const overlappingTrip = overlapCheck.rows[0];
+      return res.status(400).json({
+        message: `Trip overlaps with existing trip (${overlappingTrip.destination}) from ${overlappingTrip.start_date.slice(0, 10)} to ${overlappingTrip.end_date.slice(0, 10)}.`,
+      });
+    }
+
+    // ✅ Update trip
+    const result = await pool.query(
+      `
+      UPDATE trips
+      SET 
+        title = COALESCE($2, title),
+        destination = COALESCE($3, destination),
+        start_date = COALESCE($4::date, start_date),
+        end_date = COALESCE($5::date, end_date),
+        budget = COALESCE($6, budget)
+      WHERE id = $1 AND user_id = $7
+      RETURNING id, user_id, title, destination, start_date, end_date, budget, created_at
+      `,
+      [id, title ?? null, destination, start_date, end_date, budget ?? null, user_id]
+    );
+
+    if (!result.rows.length)
+      return res.status(404).json({ message: "Trip not found or not yours" });
+
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating trip:", err);
+    return res.status(500).json({ message: "Failed to update trip" });
+  }
 };
+
 
 // DELETE /api/trips/:id  (requires verifyToken)
 export const deleteTrip = async (req, res) => {

@@ -123,7 +123,7 @@ textarea {
 }
 
 /* ============ BUTTON ============ */
-.button[type="submit"] {
+button[type="submit"] {
     pointer-events: auto !important;
     cursor: pointer !important;
 }

@@ -59,18 +59,39 @@ export const createExpense = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // 🟣 Validate expense date within trip range
+        if (date) {
+            const tripQuery = await pool.query(
+                `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
+                [trip_id, user_id]
+            );
+            const trip = tripQuery.rows[0];
+            if (trip) {
+                const expenseDate = new Date(date);
+                const startDate = new Date(trip.start_date);
+                const endDate = new Date(trip.end_date);
+
+                if (expenseDate < startDate || expenseDate > endDate) {
+                    return res
+                        .status(400)
+                        .json({ message: "Expense date must be within the trip duration." });
+                }
+            }
+        }
         const result = await pool.query(
             `INSERT INTO expenses (user_id, trip_id, description, amount, category, date)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, user_id, trip_id, description, amount, category, date, created_at`,
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, user_id, trip_id, description, amount, category, date, created_at`,
             [user_id, trip_id, description ?? null, amount, category ?? null, date ?? null]
         );
+
         return res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
     } catch (err) {
         console.error(err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create expense");
     }
 };
+
 
 
 // PUT /api/expenses/:id (requires verifyToken)

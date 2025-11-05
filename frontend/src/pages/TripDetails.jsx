@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function TripDetails() {
     const { id } = useParams(); // trip id
@@ -16,6 +17,7 @@ export default function TripDetails() {
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState("");
 
+    // ===== Load trip + expenses =====
     const load = async () => {
         setErr("");
         try {
@@ -33,18 +35,27 @@ export default function TripDetails() {
         }
     };
 
-
     useEffect(() => {
         load();
     }, [id]);
 
-    const onChange = (e) =>
-        setForm({ ...form, [e.target.name]: e.target.value });
+    // ===== Handlers =====
+    const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
     const addExpense = async (e) => {
         e.preventDefault();
         setErr("");
-        if (!form.category || !form.amount) return;
+        // ===== Date validation =====
+        if (form.date) {
+            const expenseDate = new Date(form.date);
+            const startDate = new Date(trip.start_date);
+            const endDate = new Date(trip.end_date);
+
+            if (expenseDate < startDate || expenseDate > endDate) {
+                setErr("Expense date must be within the trip duration.");
+                return;
+            }
+        }
 
         try {
             const res = await api.post("/expenses", {
@@ -65,7 +76,6 @@ export default function TripDetails() {
         }
     };
 
-
     const removeExpense = async (expenseId) => {
         try {
             await api.delete(`/expenses/${expenseId}`);
@@ -75,15 +85,61 @@ export default function TripDetails() {
         }
     };
 
-    // ===== UI =====//
+    // ===== Dynamic color assignment =====
+    const baseColors = [
+        "#6A4C93", // Purple
+        "#FF6B6B", // Coral Red
+        "#4ECDC4", // Aqua Mint
+        "#FFD93D", // Yellow
+        "#1A535C", // Deep Teal
+        "#FF9F1C", // Orange
+        "#00A8E8", // Sky Blue
+        "#C77DFF", // Lavender
+        "#2EC4B6", // Emerald
+        "#F94144", // Red
+    ];
+
+    // This map keeps track of assigned colors per category
+    const [colorAssignments, setColorAssignments] = useState({});
+
+    useEffect(() => {
+        if (expenses.length === 0) return;
+
+        setColorAssignments((prev) => {
+            const newAssignments = { ...prev };
+            let colorIndex = Object.keys(newAssignments).length;
+
+            expenses.forEach((ex) => {
+                const category = ex.category || "Uncategorized";
+                if (!newAssignments[category]) {
+                    // Assign next unused color (loop if all colors used)
+                    newAssignments[category] = baseColors[colorIndex % baseColors.length];
+                    colorIndex++;
+                }
+            });
+
+            return newAssignments;
+        });
+    }, [expenses]);
+
+
+    // ✅ Prepare chart data from expenses
+    const chartData = Object.values(
+        expenses.reduce((acc, ex) => {
+            const category = ex.category || "Uncategorized";
+            if (!acc[category]) acc[category] = { name: category, value: 0 };
+            acc[category].value += Number(ex.amount) || 0;
+            return acc;
+        }, {})
+    );
+
+    // ===== UI =====
     if (loading) return <p>Loading…</p>;
 
     return (
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
             <Navbar />
-
             <Link to="/dashboard">{`← Back to trips`}</Link>
-
             {err && <p style={{ color: "red" }}>{err}</p>}
 
             {trip ? (
@@ -177,20 +233,83 @@ export default function TripDetails() {
                                 cursor: "pointer",
                                 border: "none",
                             }}
-                            onMouseOver={(e) => (e.target.style.backgroundColor = "var(--primary-hover)")}
-                            onMouseOut={(e) => (e.target.style.backgroundColor = "var(--primary)")}
+                            onMouseOver={(e) =>
+                                (e.target.style.backgroundColor = "var(--primary-hover)")
+                            }
+                            onMouseOut={(e) =>
+                                (e.target.style.backgroundColor = "var(--primary)")
+                            }
                         >
                             Add Expense
                         </button>
                     </form>
 
+                    {/* ===== Chart Section ===== */}
+                    {expenses.length > 0 && (
+                        <div
+                            style={{
+                                width: "100%",
+                                maxWidth: "500px",
+                                margin: "20px auto",
+                                background: "#fff",
+                                border: "1px solid #ddd",
+                                borderRadius: "8px",
+                                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                                padding: "16px",
+                            }}
+                        >
+                            <h4 style={{ textAlign: "center", marginBottom: "10px" }}>
+                                Expense Breakdown by Category
+                            </h4>
+                            <ResponsiveContainer width="100%" height={280}>
+                                <PieChart>
+                                    <Pie
+                                        data={chartData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={90}
+                                        label={({ name, percent }) =>
+                                            `${name} ${(percent * 100).toFixed(0)}%`
+                                        }
+                                        labelLine={false}
+                                    >
+                                        {chartData.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={colorAssignments[entry.name] || baseColors[index % baseColors.length]}
+                                            />
+                                        ))}
 
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value, name) => [`$${value}`, name]}
+                                        contentStyle={{ borderRadius: "8px" }}
+                                    />
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        iconType="circle"
+                                        wrapperStyle={{ marginTop: "10px" }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
 
+                    {/* ===== Expense Summary ===== */}
                     <h3 style={{ marginTop: 24 }}>
                         Expenses{" "}
                         {expenses.length > 0 && (
                             <>
-                                <span style={{ fontWeight: 500, fontSize: "1rem", color: "#555" }}>
+                                <span
+                                    style={{
+                                        fontWeight: 500,
+                                        fontSize: "1rem",
+                                        color: "#555",
+                                    }}
+                                >
                                     — Total Spent: $
                                     {expenses
                                         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
@@ -202,8 +321,10 @@ export default function TripDetails() {
                                         fontWeight: 500,
                                         fontSize: "0.95rem",
                                         color:
-                                            expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0) >
-                                                trip.budget
+                                            expenses.reduce(
+                                                (sum, e) => sum + (Number(e.amount) || 0),
+                                                0
+                                            ) > trip.budget
                                                 ? "red"
                                                 : "green",
                                     }}
@@ -211,17 +332,27 @@ export default function TripDetails() {
                                     Budget Left: $
                                     {(
                                         trip.budget -
-                                        expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+                                        expenses.reduce(
+                                            (sum, e) => sum + (Number(e.amount) || 0),
+                                            0
+                                        )
                                     ).toFixed(2)}
                                 </span>
                             </>
                         )}
                     </h3>
 
+                    {/* ===== Expense List ===== */}
                     {expenses.length === 0 ? (
                         <p>No expenses yet.</p>
                     ) : (
-                        <ul style={{ padding: 0, listStyle: "none", marginTop: "1rem" }}>
+                        <ul
+                            style={{
+                                padding: 0,
+                                listStyle: "none",
+                                marginTop: "1rem",
+                            }}
+                        >
                             {expenses.map((ex) => (
                                 <li
                                     key={ex.id}
@@ -240,9 +371,20 @@ export default function TripDetails() {
                                     <div>
                                         <strong>{ex.category || "Expense"}</strong>
                                         {ex.amount !== undefined && <span> — ${ex.amount}</span>}
-                                        {ex.date && <span style={{ opacity: 0.7 }}> on {ex.date.slice(0, 10)}</span>}
+                                        {ex.date && (
+                                            <span style={{ opacity: 0.7 }}>
+                                                {" "}
+                                                on {ex.date.slice(0, 10)}
+                                            </span>
+                                        )}
                                         {ex.description && (
-                                            <div style={{ marginTop: "4px", fontSize: "0.9rem", opacity: 0.8 }}>
+                                            <div
+                                                style={{
+                                                    marginTop: "4px",
+                                                    fontSize: "0.9rem",
+                                                    opacity: 0.8,
+                                                }}
+                                            >
                                                 {ex.description}
                                             </div>
                                         )}
@@ -252,9 +394,6 @@ export default function TripDetails() {
                             ))}
                         </ul>
                     )}
-
-
-
                 </>
             ) : (
                 <p>Trip not found.</p>

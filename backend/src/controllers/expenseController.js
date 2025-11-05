@@ -53,33 +53,36 @@ export const createExpense = async (req, res) => {
         if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
         const { trip_id, description, amount, category, date, end_date } = req.body;
+
         if (!trip_id || amount == null) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // Fetch trip to validate range
-        const tripQuery = await pool.query(
-            `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
-            [trip_id, user_id]
-        );
-        const trip = tripQuery.rows[0];
-        if (!trip) return res.status(404).json({ message: "Trip not found" });
+        // 🟣 Validate date(s) within trip range
+        if (date) {
+            const tripQuery = await pool.query(
+                `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
+                [trip_id, user_id]
+            );
+            const trip = tripQuery.rows[0];
 
-        // 🟣 Validate expense date(s)
-        const expenseStart = date ? new Date(date) : null;
-        const expenseEnd = end_date ? new Date(end_date) : expenseStart;
-        const tripStart = new Date(trip.start_date);
-        const tripEnd = new Date(trip.end_date);
+            if (trip) {
+                const expenseStart = new Date(date);
+                const expenseEnd = end_date ? new Date(end_date) : expenseStart;
+                const tripStart = new Date(trip.start_date);
+                const tripEnd = new Date(trip.end_date);
 
-        if (expenseStart < tripStart || expenseEnd > tripEnd) {
-            return res.status(400).json({
-                message: "Expense dates must be within the trip duration.",
-            });
-        }
-        if (expenseEnd < expenseStart) {
-            return res.status(400).json({
-                message: "Expense end date cannot be before start date.",
-            });
+                if (expenseStart < tripStart || expenseEnd > tripEnd) {
+                    return res
+                        .status(400)
+                        .json({ message: "Expense must be within trip duration." });
+                }
+                if (expenseEnd < expenseStart) {
+                    return res
+                        .status(400)
+                        .json({ message: "Expense end date cannot be before start date." });
+                }
+            }
         }
 
         const result = await pool.query(
@@ -91,10 +94,11 @@ export const createExpense = async (req, res) => {
 
         return res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
     } catch (err) {
-        console.error("Create expense error:", err);
+        console.error("❌ Error creating expense:", err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create expense");
     }
 };
+
 
 // ✅ Update expense
 export const updateExpense = async (req, res) => {

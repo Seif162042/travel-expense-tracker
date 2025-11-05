@@ -63,15 +63,15 @@ export const createExpense = async (req, res) => {
             `INSERT INTO expenses (user_id, trip_id, description, amount, category, date)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, user_id, trip_id, description, amount, category, date, created_at`,
-            [user_id, trip_id, description, amount, category ?? null, date ?? null]
+            [user_id, trip_id, description ?? null, amount, category ?? null, date ?? null]
         );
-
-        return successResponse(res, HTTP_STATUS.CREATED, result.rows[0], SUCCESS_MESSAGES.EXPENSE_CREATED);
+        return res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
     } catch (err) {
         console.error(err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create expense");
     }
 };
+
 
 // PUT /api/expenses/:id (requires verifyToken)
 export const updateExpense = async (req, res) => {

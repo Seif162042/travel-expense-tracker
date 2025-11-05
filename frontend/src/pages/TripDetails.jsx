@@ -54,12 +54,17 @@ export default function TripDetails() {
                 description: form.description || null,
                 date: form.date || null,
             });
-            setExpenses((prev) => [res.data, ...prev]);
+
+            // ✅ handle successResponse wrapper correctly
+            const newExpense = res.data.data || res.data;
+
+            setExpenses((prev) => [newExpense, ...prev]);
             setForm({ category: "", amount: "", description: "", date: "" });
         } catch (e2) {
             setErr(e2.response?.data?.message || "Failed to add expense");
         }
     };
+
 
     const removeExpense = async (expenseId) => {
         try {
@@ -134,7 +139,7 @@ export default function TripDetails() {
                         />
                         <input
                             name="description"
-                            placeholder="Description (optional)"
+                            placeholder="Description"
                             value={form.description}
                             onChange={onChange}
                             style={{

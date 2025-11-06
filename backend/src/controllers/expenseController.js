@@ -105,15 +105,7 @@ export const updateExpense = async (req, res) => {
     try {
         const user_id = req.user?.id;
         const { id } = req.params;
-        let { description, amount, category, date, end_date } = req.body;
-
-        // Convert empty strings to null for proper COALESCE handling
-        if (description === "") description = null;
-        if (category === "") category = null;
-        if (date === "") date = null;
-        if (end_date === "") end_date = null;
-
-        console.log("Updating expense:", { id, user_id, amount, category, description, date, end_date });
+        const { description, amount, category, date, end_date } = req.body;
 
         const result = await pool.query(
             `UPDATE expenses
@@ -128,11 +120,9 @@ export const updateExpense = async (req, res) => {
         );
 
         if (!result.rows.length) {
-            console.log("Expense not found:", { id, user_id });
             return res.status(404).json({ message: "Expense not found or not yours" });
         }
 
-        console.log("Expense updated successfully:", result.rows[0]);
         return res.status(HTTP_STATUS.OK).json(result.rows[0]);
     } catch (err) {
         console.error("Update expense error:", err);

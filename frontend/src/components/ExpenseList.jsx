@@ -12,32 +12,17 @@ export default function ExpenseList({ expenses, setExpenses, setErr }) {
 
     const saveEdit = async (id) => {
         try {
-            // Validate and prepare data
-            const amount = Number(editData.amount);
-            if (isNaN(amount) || amount <= 0) {
-                setErr("Amount must be a positive number");
-                return;
-            }
-
-            if (!editData.category || editData.category.trim() === "") {
-                setErr("Category is required");
-                return;
-            }
-
             const res = await api.put(`/expenses/${id}`, {
-                amount: amount,
-                category: editData.category.trim(),
-                description: editData.description?.trim() || null,
-                date: editData.date || null,
-                end_date: editData.end_date || null,
+                amount: Number(editData.amount),
+                category: editData.category,
+                description: editData.description || null,
+                date: editData.date,
+                end_date: editData.end_date,
             });
             setExpenses((prev) => prev.map((e) => (e.id === id ? res.data : e)));
             setEditingId(null);
-            setErr(""); // Clear any previous errors
         } catch (e) {
-            const errorMsg = e.response?.data?.message || e.response?.data?.error || "Failed to update expense";
-            setErr(errorMsg);
-            console.error("Error updating expense:", e.response?.data || e);
+            setErr(e.response?.data?.message || "Failed to update expense");
         }
     };
 

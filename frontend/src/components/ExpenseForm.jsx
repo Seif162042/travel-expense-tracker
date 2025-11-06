@@ -1,7 +1,13 @@
+/**
+ * ExpenseForm Component
+ * Form for creating new expenses associated with a trip.
+ * Includes validation to ensure expense dates are within the trip duration.
+ */
 import { useState } from "react";
 import api from "../api/axios";
 
 export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
+    // Form state to hold expense input values
     const [form, setForm] = useState({
         category: "",
         amount: "",
@@ -10,9 +16,9 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
         end_date: "",
     });
 
+    // Generic onChange handler for all form inputs
     const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-    // ✅ your style
     const inputStyle = {
         width: "100%",
         padding: "10px",
@@ -22,19 +28,27 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
         boxSizing: "border-box",
     };
 
+    /**
+     * Handles form submission to create a new expense
+     * Validates required fields and ensures dates are within trip duration
+     */
     const addExpense = async (e) => {
         e.preventDefault();
         setErr("");
 
         const { category, amount, description, date, end_date } = form;
+        // Validate required fields
         if (!category || !amount || !date) return setErr("Please fill all required fields.");
 
+        // Date validation: ensure expense dates are within trip dates
         const s = new Date(date),
             eD = end_date ? new Date(end_date) : s,
             tS = new Date(trip.start_date),
             tE = new Date(trip.end_date);
 
+        // Check if expense dates fall within trip duration
         if (s < tS || eD > tE) return setErr("Expense must be within trip duration.");
+        // Check if end date is not before start date
         if (eD < s) return setErr("End date cannot be before start date.");
 
         try {
@@ -99,6 +113,7 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
                 onChange={onChange}
                 style={inputStyle}
             />
+            {/* Show end_date field only for hotel expenses (multi-day stays) */}
             {form.category.toLowerCase() === "hotel" && (
                 <input
                     type="date"

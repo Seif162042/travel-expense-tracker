@@ -1,3 +1,10 @@
+/**
+ * DashboardCharts Component
+ * Displays three types of charts for trip analytics:
+ * - Bar chart: Budget vs Actual Spent comparison
+ * - Pie chart: Budget distribution across trips
+ * - Line chart: Spending trend over time
+ */
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid
@@ -5,17 +12,20 @@ import {
 
 export default function DashboardCharts({ trips = [], expensesData = {} }) {
   // === Derived datasets ===
+  // Prepare data for bar chart: budget vs spent for each trip
   const barData = trips.map((t) => ({
     name: t.destination,
     Budget: Number(t.budget) || 0,
     Spent: Number(expensesData[t.id]) || 0,
   }));
 
+  // Prepare data for pie chart: budget distribution
   const pieData = trips.map((t) => ({
     name: t.destination,
     value: Number(t.budget) || 0,
   }));
 
+  // Prepare data for line chart: spending over time (sorted by start date)
   const lineData = trips
     .slice()
     .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
@@ -25,6 +35,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
       Spent: Number(expensesData[t.id]) || 0,
     }));
 
+  // Color palette for charts
   const COLORS = [
     "#6A0DAD", // deep purple
     "#9B5DE5", // bright violet
@@ -46,7 +57,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
     <section style={{ marginTop: "2rem" }}>
       <h2 style={{ marginBottom: "1rem" }}>Analytics Overview</h2>
 
-      {/* === Bar Chart === */}
+      {/* Bar Chart: Compare budget vs actual spending for each trip */}
       <div style={chartCard}>
         <h4>Budget vs. Actual Spent</h4>
         <ResponsiveContainer width="100%" height={300}>
@@ -62,9 +73,10 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
         </ResponsiveContainer>
       </div>
 
-      {/* === Pie Chart === */}
+      {/* Pie Chart: Show budget distribution across all trips */}
       <div style={chartCard}>
         <h4>Trip Budget Distribution</h4>
+        {/* Only render pie chart if there's data with non-zero values */}
         {pieData.length > 0 && pieData.some((p) => p.value > 0) ? (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -90,7 +102,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
         )}
       </div>
 
-      {/* === Line Chart === */}
+      {/* Line Chart: Show spending trend chronologically */}
       <div style={chartCard}>
         <h4>Spending Trend Over Time</h4>
         <ResponsiveContainer width="100%" height={300}>

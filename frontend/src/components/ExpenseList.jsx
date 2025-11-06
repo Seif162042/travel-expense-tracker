@@ -1,12 +1,25 @@
+/**
+ * ExpenseList Component
+ * Displays a list of expenses with inline editing capabilities.
+ * Allows users to edit and delete expenses, with validation to ensure
+ * expense dates stay within the trip duration.
+ */
 import { useState } from "react";
 import api from "../api/axios";
 
 export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
+    // State to track which expense is currently being edited
     const [editingId, setEditingId] = useState(null);
+    // State to hold the data being edited
     const [editData, setEditData] = useState({});
 
+    /**
+     * Initiates edit mode for an expense
+     * Populates the edit form with the expense's current data
+     */
     const handleEdit = (expense) => {
         setEditingId(expense.id);
+        // Format dates to YYYY-MM-DD for date input fields
         setEditData({
             category: expense.category,
             amount: expense.amount,
@@ -17,6 +30,10 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
         setErr(""); // Clear any previous errors when starting to edit
     };
 
+    /**
+     * Saves the edited expense to the backend
+     * Validates that expense dates are within the trip duration before saving
+     */
     const saveEdit = async (id) => {
         try {
             // === Client-side date validation ===
@@ -78,9 +95,13 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
 
 
 
+    /**
+     * Deletes an expense from the backend and updates the local state
+     */
     const removeExpense = async (id) => {
         try {
             await api.delete(`/expenses/${id}`);
+            // Remove the deleted expense from the local state
             setExpenses((prev) => prev.filter((x) => x.id !== id));
         } catch (e3) {
             setErr(e3.response?.data?.message || "Failed to delete expense");
@@ -103,8 +124,10 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                         backgroundColor: "#fff",
                     }}
                 >
+                    {/* Show edit form if this expense is being edited, otherwise show display view */}
                     {editingId === ex.id ? (
                         <>
+                            {/* Edit mode: Input fields for editing expense data */}
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <input
                                     value={editData.category}
@@ -136,6 +159,7 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                                     }
                                 />
                             </div>
+                            {/* Save and Cancel buttons */}
                             <div style={{ display: "flex", gap: "6px" }}>
                                 <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
                                 <button onClick={() => {
@@ -146,6 +170,7 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                         </>
                     ) : (
                         <>
+                            {/* Display mode: Show expense information */}
                             <div>
                                 <strong>{ex.category}</strong> — ${ex.amount}
                                 <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
@@ -158,6 +183,7 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                                     </div>
                                 )}
                             </div>
+                            {/* Edit and Delete buttons */}
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <button onClick={() => handleEdit(ex)}>✎ Edit</button>
                                 <button onClick={() => removeExpense(ex.id)}>🗑 Delete</button>

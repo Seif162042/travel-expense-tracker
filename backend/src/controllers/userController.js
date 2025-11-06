@@ -1,3 +1,10 @@
+/**
+ * User Controller
+ * Handles user authentication and profile management:
+ * - User registration with password hashing
+ * - User login with JWT token generation
+ * - User profile retrieval
+ */
 // backend/src/controllers/userController.js
 import bcrypt from "bcrypt"; // if bcrypt fails on Windows, switch to "bcryptjs"
 import jwt from "jsonwebtoken";
@@ -12,11 +19,16 @@ import {
 } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 
-// helper to create JWT
+/**
+ * Helper function to create JWT token for authenticated users
+ */
 const makeToken = (id, email) =>
     jwt.sign({ id, email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 
-// POST /api/users/register
+/**
+ * Register a new user
+ * Hashes password before storing and returns JWT token
+ */
 export const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -50,9 +62,10 @@ export const registerUser = async (req, res) => {
     }
 };
 
-// GET /api/users/me
-
-
+/**
+ * Get the authenticated user's profile
+ * Uses user ID from JWT token (set by authMiddleware)
+ */
 export const getUserProfile = async (req, res) => {
     try {
         // req.user is set by verifyToken: { id, email }
@@ -71,7 +84,10 @@ export const getUserProfile = async (req, res) => {
 
 
 
-// POST /api/users/login
+/**
+ * Authenticate user and return JWT token
+ * Compares provided password with hashed password in database
+ */
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;

@@ -1,9 +1,22 @@
+/**
+ * Trip Controller
+ * Handles all trip-related API endpoints including:
+ * - Fetching trips (user's trips or public feed)
+ * - Creating new trips with overlap validation
+ * - Updating trips with overlap validation
+ * - Deleting trips
+ * 
+ * Includes validation to prevent overlapping trips for the same user.
+ */
 // backend/src/controllers/tripController.js
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 
-// === GET /api/trips/feed ===
+/**
+ * Get public feed of trips from other users
+ * Returns up to 50 most recent trips (excluding current user's trips)
+ */
 export const getFeedTrips = async (req, res) => {
   try {
     const user_id = req.user?.id;
@@ -27,7 +40,10 @@ export const getFeedTrips = async (req, res) => {
   }
 };
 
-// === GET /api/trips ===
+/**
+ * Get all trips for the authenticated user
+ * Returns up to 50 most recent trips
+ */
 export const getTrips = async (req, res) => {
   try {
     const user_id = req.user?.id;
@@ -49,7 +65,10 @@ export const getTrips = async (req, res) => {
   }
 };
 
-// === GET /api/trips/:id ===
+/**
+ * Get a specific trip by ID
+ * No user ownership check - allows viewing any trip
+ */
 export const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -67,22 +86,28 @@ export const getTripById = async (req, res) => {
   }
 };
 
-// === POST /api/trips ===
+/**
+ * Create a new trip
+ * Validates date order and checks for overlapping trips
+ * Prevents users from creating trips that overlap with existing trips
+ */
 export const createTrip = async (req, res) => {
-  try {
-    const user_id = req.user?.id;
-    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+        try {
+        const user_id = req.user?.id;
+        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const { title, destination, start_date, end_date, budget } = req.body;
-    if (!destination || !start_date || !end_date)
+        const { title, destination, start_date, end_date, budget } = req.body;
+        // Validate required fields
+        if (!destination || !start_date || !end_date)
       return res.status(400).json({ message: "All fields required" });
 
+    // Validate date order
     const newStart = new Date(start_date);
     const newEnd = new Date(end_date);
     if (newEnd < newStart)
       return res.status(400).json({ message: "End date must be after start date" });
 
-    // ✅ Overlap check that allows boundary touch
+    // Overlap check that allows boundary touch (trips can start when another ends)
     const overlapCheck = await pool.query(
       `
       SELECT id, destination, start_date, end_date
@@ -119,7 +144,11 @@ export const createTrip = async (req, res) => {
   }
 };
 
-// === PUT /api/trips/:id ===
+/**
+ * Update an existing trip
+ * Validates date order and checks for overlapping trips (excluding itself)
+ * Only allows updates to trips owned by the authenticated user
+ */
 export const updateTrip = async (req, res) => {
   try {
     const { id } = req.params;
@@ -187,7 +216,10 @@ export const updateTrip = async (req, res) => {
   }
 };
 
-// === DELETE /api/trips/:id ===
+/**
+ * Delete a trip
+ * Only allows deletion of trips owned by the authenticated user
+ */
 export const deleteTrip = async (req, res) => {
   try {
     const { id } = req.params;

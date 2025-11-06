@@ -1,10 +1,18 @@
+/**
+ * TripList Component
+ * Displays a list of trips with inline editing and deletion capabilities.
+ * Shows budget usage and days remaining for each trip.
+ */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 
 export default function TripList({ trips, expensesData, loadTrips }) {
+  // Error state for displaying API errors
   const [err, setErr] = useState("");
+  // State to track which trip is being edited
   const [editingTrip, setEditingTrip] = useState(null);
+  // Form state for editing trip data
   const [form, setForm] = useState({
     destination: "",
     start_date: "",
@@ -13,8 +21,13 @@ export default function TripList({ trips, expensesData, loadTrips }) {
   });
 
   // ===== Handle Edit =====
+  /**
+   * Initiates edit mode for a trip
+   * Populates the form with the trip's current data
+   */
   const handleEditClick = (trip) => {
     setEditingTrip(trip);
+    // Format dates to YYYY-MM-DD for date input fields
     setForm({
       destination: trip.destination,
       start_date: trip.start_date.slice(0, 10),
@@ -23,6 +36,10 @@ export default function TripList({ trips, expensesData, loadTrips }) {
     });
   };
 
+  /**
+   * Saves the edited trip to the backend
+   * Resets edit mode and refreshes trip list on success
+   */
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -42,6 +59,10 @@ export default function TripList({ trips, expensesData, loadTrips }) {
   };
 
   // ===== Handle Delete =====
+  /**
+   * Deletes a trip after user confirmation
+   * Refreshes trip list after successful deletion
+   */
   const deleteTrip = async (id) => {
     if (!confirm("Delete this trip?")) return;
     try {
@@ -53,13 +74,20 @@ export default function TripList({ trips, expensesData, loadTrips }) {
   };
 
   // ===== Helper Badges =====
+  /**
+   * Calculate percentage of budget used for a trip
+   * Returns 0-100, capped at 100%
+   */
   const getBudgetUsed = (trip) => {
   const spent = expensesData?.[trip.id] || 0;
   if (!trip.budget) return 0;
   return Math.min(((spent / trip.budget) * 100).toFixed(0), 100);
 };
 
-
+  /**
+   * Calculate days remaining until trip ends
+   * Returns formatted string with days left, "Ends today", or days ago
+   */
   const getDaysLeft = (trip) => {
     const today = new Date();
     const end = new Date(trip.end_date);
@@ -104,7 +132,7 @@ export default function TripList({ trips, expensesData, loadTrips }) {
                   {trip.budget}
                 </div>
 
-                {/* Badges */}
+                {/* Badges showing budget usage and days remaining */}
                 <div style={{ marginTop: "6px" }}>
                   <span
                     style={{
@@ -133,6 +161,7 @@ export default function TripList({ trips, expensesData, loadTrips }) {
                 </div>
               </div>
 
+              {/* Edit and Delete buttons */}
               <div>
                 <button
                   style={editBtn}
@@ -152,7 +181,7 @@ export default function TripList({ trips, expensesData, loadTrips }) {
         </ul>
       )}
 
-      {/* === Inline Edit Form === */}
+      {/* Inline Edit Form: Shows when a trip is being edited */}
       {editingTrip && (
         <div style={{ marginTop: "1.5rem" }}>
           <h3>Edit Trip: {editingTrip.destination}</h3>

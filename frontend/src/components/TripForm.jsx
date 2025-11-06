@@ -1,18 +1,32 @@
+/**
+ * TripForm Component
+ * Form for creating new trips.
+ * Handles trip creation with validation and refreshes the trip list on success.
+ */
 import { useState } from "react";
 import api from "../api/axios";
 
 export default function TripForm({ loadTrips }) {
+  // Form state for trip input fields
   const [form, setForm] = useState({
     destination: "",
     start_date: "",
     end_date: "",
     budget: "",
   });
+  // Error state for displaying validation/API errors
   const [err, setErr] = useState("");
 
+  /**
+   * Generic onChange handler for all form inputs
+   */
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  /**
+   * Handle form submission to create a new trip
+   * Resets form and refreshes trip list on success
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErr("");
@@ -25,7 +39,9 @@ export default function TripForm({ loadTrips }) {
         end_date: form.end_date,
         budget: Number(form.budget),
       });
+      // Reset form after successful submission
       setForm({ destination: "", start_date: "", end_date: "", budget: "" });
+      // Refresh the trip list in parent component
       loadTrips();
     } catch (error) {
       setErr(error.response?.data?.message || "Failed to add trip");

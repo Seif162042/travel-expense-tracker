@@ -1,3 +1,11 @@
+/**
+ * TripDetails Page Component
+ * Displays detailed information about a specific trip including:
+ * - Trip information (destination, dates, budget)
+ * - Form to add new expenses
+ * - Chart visualization of expenses
+ * - Filtered and sorted list of expenses
+ */
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
@@ -8,14 +16,20 @@ import ExpenseChart from "../components/ExpenseChart";
 import ExpenseFilters from "../components/ExpenseFilters";
 
 export default function TripDetails() {
+    // Get trip ID from URL parameters
     const { id } = useParams();
+    // State for trip data
     const [trip, setTrip] = useState(null);
+    // State for all expenses (unfiltered)
     const [expenses, setExpenses] = useState([]);
+    // State for filtered/sorted expenses to display
     const [filteredExpenses, setFilteredExpenses] = useState([]);
+    // State for error messages
     const [err, setErr] = useState("");
+    // Loading state
     const [loading, setLoading] = useState(true);
 
-    // Load trip + expenses
+    // Load trip and its expenses when component mounts or trip ID changes
     useEffect(() => {
         (async () => {
             try {
@@ -35,13 +49,15 @@ export default function TripDetails() {
         })();
     }, [id]);
 
-    // Sync filtered expenses when expenses change
+    // Sync filtered expenses when expenses change (e.g., after adding/deleting)
     useEffect(() => {
         setFilteredExpenses(expenses);
     }, [expenses]);
 
+    // Show loading indicator while fetching data
     if (loading) return <p>Loading…</p>;
 
+    // Calculate total amount spent across all expenses
     const totalSpent = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return (

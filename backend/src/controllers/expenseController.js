@@ -1,9 +1,23 @@
+/**
+ * Expense Controller
+ * Handles all expense-related API endpoints including:
+ * - Fetching expenses (all or by trip)
+ * - Creating new expenses
+ * - Updating existing expenses
+ * - Deleting expenses
+ * 
+ * All operations include validation to ensure expense dates
+ * stay within the associated trip's duration.
+ */
 // backend/src/controllers/expenseController.js
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { errorResponse } from "../utils/responseHelpers.js";
 
-// ✅ Get all expenses (user-wide)
+/**
+ * Get all expenses for the authenticated user
+ * Returns up to 100 most recent expenses
+ */
 export const getExpenses = async (req, res) => {
     try {
         const user_id = req.user?.id;
@@ -24,7 +38,10 @@ export const getExpenses = async (req, res) => {
     }
 };
 
-// ✅ Get expenses for a specific trip
+/**
+ * Get all expenses for a specific trip
+ * Only returns expenses that belong to the authenticated user
+ */
 export const getExpensesByTripId = async (req, res) => {
     try {
         const user_id = req.user?.id;
@@ -46,7 +63,11 @@ export const getExpensesByTripId = async (req, res) => {
     }
 };
 
-// ✅ Create an expense
+/**
+ * Create a new expense
+ * Validates that expense dates are within the trip's date range
+ * before creating the expense record
+ */
 export const createExpense = async (req, res) => {
     try {
         const user_id = req.user?.id;
@@ -54,11 +75,12 @@ export const createExpense = async (req, res) => {
 
         const { trip_id, description, amount, category, date, end_date } = req.body;
 
+        // Validate required fields
         if (!trip_id || amount == null) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // 🟣 Validate date(s) within trip range
+        // Validate date(s) within trip range
         if (date) {
             const tripQuery = await pool.query(
                 `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
@@ -100,14 +122,18 @@ export const createExpense = async (req, res) => {
 };
 
 
-// ✅ Update expense
+/**
+ * Update an existing expense
+ * Validates that updated dates are within the trip's date range
+ * Uses COALESCE to only update provided fields
+ */
 export const updateExpense = async (req, res) => {
     try {
         const user_id = req.user?.id;
         const { id } = req.params;
         const { description, amount, category, date, end_date } = req.body;
 
-        // First, get the expense to find its trip_id
+        // First, get the expense to find its trip_id and current dates
         const expenseQuery = await pool.query(
             `SELECT trip_id, date as current_date, end_date as current_end_date FROM expenses WHERE id = $1 AND user_id = $2`,
             [id, user_id]
@@ -121,10 +147,11 @@ export const updateExpense = async (req, res) => {
         const trip_id = expense.trip_id;
 
         // Use the new date if provided, otherwise use the current date
+        // This allows partial updates while still validating dates
         const expenseDate = date ?? expense.current_date;
         const expenseEndDate = end_date ?? expense.current_end_date;
 
-        // 🟣 Validate date(s) within trip range
+        // Validate date(s) within trip range
         if (expenseDate) {
             const tripQuery = await pool.query(
                 `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
@@ -170,7 +197,10 @@ export const updateExpense = async (req, res) => {
     }
 };
 
-// ✅ Delete expense
+/**
+ * Delete an expense
+ * Only allows deletion of expenses that belong to the authenticated user
+ */
 export const deleteExpense = async (req, res) => {
     try {
         const user_id = req.user?.id;

@@ -1,3 +1,8 @@
+/**
+ * Navbar Component
+ * Main navigation bar for the application.
+ * Displays links to different pages and handles user logout.
+ */
 import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
@@ -6,6 +11,9 @@ export default function Navbar() {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    /**
+     * Handle logout: clear user session and redirect to login page
+     */
     const doLogout = () => {
         logout();
         navigate("/login");

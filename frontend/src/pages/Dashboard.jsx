@@ -1,3 +1,11 @@
+/**
+ * Dashboard Page Component
+ * Main page displaying user's trips with:
+ * - Overview statistics
+ * - List of all trips with expense totals
+ * - Form to create new trips
+ * - Collapsible analytics charts
+ */
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
@@ -6,31 +14,39 @@ import TripList from "../components/TripList";
 import TripForm from "../components/TripForm";
 import DashboardOverview from "../components/DashboardOverview";
 
-
-
-
 export default function Dashboard() {
+  // State for user's trips
   const [trips, setTrips] = useState([]);
+  // State for expense totals per trip (trip_id -> total amount)
   const [expensesData, setExpensesData] = useState({});
+  // Loading state
   const [loading, setLoading] = useState(true);
+  // Error state
   const [err, setErr] = useState("");
+  // State to toggle analytics visibility
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-
+  /**
+   * Load all trips and calculate expense totals for each trip
+   * Fetches trips and their associated expenses in parallel
+   */
   const loadTrips = async () => {
     try {
       const res = await api.get("/trips");
       setTrips(res.data);
 
-      // load total expenses for each trip
+      // Load total expenses for each trip
+      // Creates a map of trip_id -> total expense amount
       const expensesObj = {};
       await Promise.all(
         res.data.map(async (t) => {
           try {
             const expRes = await api.get(`/expenses/trip/${t.id}`);
+            // Sum all expense amounts for this trip
             const total = expRes.data.reduce((sum, e) => sum + Number(e.amount || 0), 0);
             expensesObj[t.id] = total;
           } catch {
+            // If expenses can't be loaded, default to 0
             expensesObj[t.id] = 0;
           }
         })

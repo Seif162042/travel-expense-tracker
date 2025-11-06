@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import ExpenseForm from "../components/ExpenseForm";
 import ExpenseList from "../components/ExpenseList";
 import ExpenseChart from "../components/ExpenseChart";
+import ExpenseFilters from "../components/ExpenseFilters";
 
 export default function TripDetails() {
     const { id } = useParams();
     const [trip, setTrip] = useState(null);
     const [expenses, setExpenses] = useState([]);
+    const [filteredExpenses, setFilteredExpenses] = useState([]);
+    const filteredExpensesRef = useRef([]);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -23,6 +26,8 @@ export default function TripDetails() {
                 ]);
                 setTrip(tRes.data);
                 setExpenses(eRes.data);
+                setFilteredExpenses(eRes.data);
+                filteredExpensesRef.current = eRes.data;
             } catch (e) {
                 setErr(e.response?.data?.message || "Failed to load trip");
             } finally {
@@ -30,6 +35,52 @@ export default function TripDetails() {
             }
         })();
     }, [id]);
+
+    // Sync filtered expenses when expenses change
+    useEffect(() => {
+        setFilteredExpenses(expenses);
+        filteredExpensesRef.current = expenses;
+    }, [expenses]);
+
+    // Update ref whenever filteredExpenses changes
+    useEffect(() => {
+        filteredExpensesRef.current = filteredExpenses;
+    }, [filteredExpenses]);
+
+    // Wrapper function to update actual expenses (not filtered)
+    const updateExpenses = (updater) => {
+        setExpenses((actualExpenses) => {
+            if (typeof updater === 'function') {
+                // Use ref to get the latest filtered expenses
+                const currentFiltered = filteredExpensesRef.current;
+                // Execute the updater on filtered list to see what changed
+                const updatedFiltered = updater(currentFiltered);
+
+                // Find which expense was updated by comparing each expense by ID
+                for (const updated of updatedFiltered) {
+                    const original = currentFiltered.find(fe => fe.id === updated.id);
+                    if (original && JSON.stringify(updated) !== JSON.stringify(original)) {
+                        // This expense was updated, apply the update to actual expenses
+                        return actualExpenses.map(e => e.id === updated.id ? updated : e);
+                    }
+                }
+
+                // For delete operations (length decreased)
+                if (updatedFiltered.length < currentFiltered.length) {
+                    const deletedId = currentFiltered.find(fe =>
+                        !updatedFiltered.some(ue => ue.id === fe.id)
+                    )?.id;
+                    if (deletedId) {
+                        return actualExpenses.filter(e => e.id !== deletedId);
+                    }
+                }
+
+                // If no change detected, return as-is
+                return actualExpenses;
+            }
+            return updater;
+        });
+    };
 
     if (loading) return <p>Loading…</p>;
 
@@ -58,7 +109,8 @@ export default function TripDetails() {
                                 Total Spent: ${totalSpent.toFixed(2)} | Budget Left: $
                                 {(trip.budget - totalSpent).toFixed(2)}
                             </h3>
-                            <ExpenseList expenses={expenses} setExpenses={setExpenses} setErr={setErr} />
+                            <ExpenseFilters expenses={expenses} onChange={setFilteredExpenses} />
+                            <ExpenseList expenses={filteredExpenses} setExpenses={updateExpenses} setErr={setErr} />
                         </>
                     )}
                 </>

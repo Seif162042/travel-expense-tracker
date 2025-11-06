@@ -107,6 +107,50 @@ export const updateExpense = async (req, res) => {
         const { id } = req.params;
         const { description, amount, category, date, end_date } = req.body;
 
+        // First, get the expense to find its trip_id
+        const expenseQuery = await pool.query(
+            `SELECT trip_id, date as current_date, end_date as current_end_date FROM expenses WHERE id = $1 AND user_id = $2`,
+            [id, user_id]
+        );
+
+        if (!expenseQuery.rows.length) {
+            return res.status(404).json({ message: "Expense not found or not yours" });
+        }
+
+        const expense = expenseQuery.rows[0];
+        const trip_id = expense.trip_id;
+
+        // Use the new date if provided, otherwise use the current date
+        const expenseDate = date ?? expense.current_date;
+        const expenseEndDate = end_date ?? expense.current_end_date;
+
+        // 🟣 Validate date(s) within trip range
+        if (expenseDate) {
+            const tripQuery = await pool.query(
+                `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
+                [trip_id, user_id]
+            );
+            const trip = tripQuery.rows[0];
+
+            if (trip) {
+                const expenseStart = new Date(expenseDate);
+                const expenseEnd = expenseEndDate ? new Date(expenseEndDate) : expenseStart;
+                const tripStart = new Date(trip.start_date);
+                const tripEnd = new Date(trip.end_date);
+
+                if (expenseStart < tripStart || expenseEnd > tripEnd) {
+                    return res
+                        .status(400)
+                        .json({ message: "Expense must be within trip duration." });
+                }
+                if (expenseEnd < expenseStart) {
+                    return res
+                        .status(400)
+                        .json({ message: "Expense end date cannot be before start date." });
+                }
+            }
+        }
+
         const result = await pool.query(
             `UPDATE expenses
        SET description = COALESCE($2, description),
@@ -118,10 +162,6 @@ export const updateExpense = async (req, res) => {
        RETURNING id, user_id, trip_id, description, amount, category, date, end_date, created_at`,
             [id, description ?? null, amount ?? null, category ?? null, date ?? null, end_date ?? null, user_id]
         );
-
-        if (!result.rows.length) {
-            return res.status(404).json({ message: "Expense not found or not yours" });
-        }
 
         return res.status(HTTP_STATUS.OK).json(result.rows[0]);
     } catch (err) {

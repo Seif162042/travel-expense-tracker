@@ -24,6 +24,7 @@ export default function TripDetails() {
                     api.get(`/expenses/trip/${id}`),
                 ]);
                 setTrip(tRes.data);
+                localStorage.setItem("currentTrip", JSON.stringify(tRes.data));
                 setExpenses(eRes.data);
                 setFilteredExpenses(eRes.data);
             } catch (e) {
@@ -67,7 +68,7 @@ export default function TripDetails() {
                                 {(trip.budget - totalSpent).toFixed(2)}
                             </h3>
                             <ExpenseFilters expenses={expenses} onChange={setFilteredExpenses} />
-                            <ExpenseList expenses={filteredExpenses} setExpenses={setExpenses} setErr={setErr} />
+                            <ExpenseList expenses={filteredExpenses} setExpenses={setExpenses} setErr={setErr} trip={trip} />
                         </>
                     )}
                 </>

@@ -1,30 +1,80 @@
 import { useState } from "react";
 import api from "../api/axios";
 
-export default function ExpenseList({ expenses, setExpenses, setErr }) {
+export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
 
     const handleEdit = (expense) => {
         setEditingId(expense.id);
-        setEditData(expense);
+        setEditData({
+            category: expense.category,
+            amount: expense.amount,
+            description: expense.description || "",
+            date: expense.date ? expense.date.slice(0, 10) : "",
+            end_date: expense.end_date ? expense.end_date.slice(0, 10) : "",
+        });
     };
 
     const saveEdit = async (id) => {
         try {
-            const res = await api.put(`/expenses/${id}`, {
+            // === Client-side date validation ===
+            if (trip && editData.date) {
+                // Normalize dates to date-only strings for comparison (YYYY-MM-DD)
+                const expenseStartDate = editData.date.slice(0, 10);
+                const expenseEndDate = editData.end_date
+                    ? editData.end_date.slice(0, 10)
+                    : expenseStartDate;
+                const tripStartDate = trip.start_date ? trip.start_date.slice(0, 10) : null;
+                const tripEndDate = trip.end_date ? trip.end_date.slice(0, 10) : null;
+
+                if (tripStartDate && tripEndDate) {
+                    // Validate expense dates are within trip dates (string comparison works for YYYY-MM-DD format)
+                    if (expenseStartDate < tripStartDate || expenseEndDate > tripEndDate) {
+                        setErr("Expense dates must stay within the trip duration.");
+                        return;
+                    }
+
+                    // Validate expense end date is not before start date
+                    if (expenseEndDate < expenseStartDate) {
+                        setErr("Expense end date cannot be before start date.");
+                        return;
+                    }
+                }
+            } else if (trip && !editData.date) {
+                // If trip exists but no date provided, that's also invalid
+                setErr("Expense date is required.");
+                return;
+            }
+
+            // === Prepare payload ===
+            const payload = {
                 amount: Number(editData.amount),
                 category: editData.category,
-                description: editData.description || null,
-                date: editData.date,
-                end_date: editData.end_date,
-            });
-            setExpenses((prev) => prev.map((e) => (e.id === id ? res.data : e)));
+                description: editData.description?.trim() || null,
+                date: editData.date ? editData.date : undefined,
+                end_date: editData.end_date ? editData.end_date : undefined,
+            };
+
+            const res = await api.put(`/expenses/${id}`, payload);
+            const updated = res.data;
+
+            setExpenses((prev) =>
+                prev.map((e) => (e.id === id ? { ...e, ...updated } : e))
+            );
             setEditingId(null);
         } catch (e) {
-            setErr(e.response?.data?.message || "Failed to update expense");
+            console.error("Update failed:", e.response?.data || e);
+            setErr(
+                e.response?.data?.message ||
+                (Array.isArray(e.response?.data?.error)
+                    ? e.response.data.error[0].msg
+                    : "Failed to update expense")
+            );
         }
     };
+
+
 
     const removeExpense = async (id) => {
         try {
@@ -40,11 +90,11 @@ export default function ExpenseList({ expenses, setExpenses, setErr }) {
             {expenses.map((ex) => (
                 <li
                     key={ex.id}
-                    className="card"
                     style={{
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        padding: "12px 16px",
                         marginBottom: "10px",
                         border: "1px solid #ddd",
                         borderRadius: "8px",
@@ -52,29 +102,41 @@ export default function ExpenseList({ expenses, setExpenses, setErr }) {
                     }}
                 >
                     {editingId === ex.id ? (
-                        <>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <input
-                                    value={editData.category}
-                                    onChange={(e) =>
-                                        setEditData({ ...editData, category: e.target.value })
-                                    }
-                                    style={{ width: "20%" }}
-                                />
-                                <input
-                                    type="number"
-                                    value={editData.amount}
-                                    onChange={(e) =>
-                                        setEditData({ ...editData, amount: e.target.value })
-                                    }
-                                    style={{ width: "20%" }}
-                                />
-                            </div>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
-                                <button onClick={() => setEditingId(null)}>✖ Cancel</button>
-                            </div>
-                        </>
+                        <div style={{ flex: 1 }}>
+                            <input
+                                value={editData.category}
+                                onChange={(e) =>
+                                    setEditData({ ...editData, category: e.target.value })
+                                }
+                                style={{ width: "20%", marginRight: "8px" }}
+                            />
+                            <input
+                                type="number"
+                                value={editData.amount}
+                                onChange={(e) =>
+                                    setEditData({ ...editData, amount: e.target.value })
+                                }
+                                style={{ width: "15%", marginRight: "8px" }}
+                            />
+                            <input
+                                type="date"
+                                value={editData.date}
+                                onChange={(e) =>
+                                    setEditData({ ...editData, date: e.target.value })
+                                }
+                                style={{ marginRight: "8px" }}
+                            />
+                            <input
+                                type="date"
+                                value={editData.end_date}
+                                onChange={(e) =>
+                                    setEditData({ ...editData, end_date: e.target.value })
+                                }
+                                style={{ marginRight: "8px" }}
+                            />
+                            <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
+                            <button onClick={() => setEditingId(null)}>✖ Cancel</button>
+                        </div>
                     ) : (
                         <>
                             <div>
@@ -83,6 +145,11 @@ export default function ExpenseList({ expenses, setExpenses, setErr }) {
                                     {ex.date?.slice(0, 10)}
                                     {ex.end_date ? ` → ${ex.end_date.slice(0, 10)}` : ""}
                                 </div>
+                                {ex.description && (
+                                    <div style={{ opacity: 0.7, fontSize: "0.85rem" }}>
+                                        {ex.description}
+                                    </div>
+                                )}
                             </div>
                             <div style={{ display: "flex", gap: "8px" }}>
                                 <button onClick={() => handleEdit(ex)}>✎ Edit</button>

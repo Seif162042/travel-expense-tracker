@@ -262,10 +262,10 @@ const cardStyle = {
 };
 
 const selectStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "1rem",
-    boxSizing: "border-box",
+  width: "100%",
+  padding: "10px",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
+  fontSize: "1rem",
+  boxSizing: "border-box",
 }

@@ -2,423 +2,64 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import ExpenseForm from "../components/ExpenseForm";
+import ExpenseList from "../components/ExpenseList";
+import ExpenseChart from "../components/ExpenseChart";
 
 export default function TripDetails() {
-    const { id } = useParams(); // trip id
+    const { id } = useParams();
     const [trip, setTrip] = useState(null);
     const [expenses, setExpenses] = useState([]);
-    const [form, setForm] = useState({
-        category: "",
-        amount: "",
-        description: "",
-        date: "",
-        end_date: "",
-    });
-    const [loading, setLoading] = useState(true);
     const [err, setErr] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    // ===== Load trip + expenses =====
-    const load = async () => {
-        setErr("");
-        try {
-            const [tRes, eRes] = await Promise.all([
-                api.get(`/trips/${id}`),
-                api.get(`/expenses/trip/${id}`),
-            ]);
-            setTrip(tRes.data);
-            setExpenses(eRes.data);
-        } catch (e) {
-            console.error("Error loading trip details:", e);
-            setErr(e.response?.data?.message || "Failed to load trip");
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Load trip + expenses
     useEffect(() => {
-        load();
+        (async () => {
+            try {
+                const [tRes, eRes] = await Promise.all([
+                    api.get(`/trips/${id}`),
+                    api.get(`/expenses/trip/${id}`),
+                ]);
+                setTrip(tRes.data);
+                setExpenses(eRes.data);
+            } catch (e) {
+                setErr(e.response?.data?.message || "Failed to load trip");
+            } finally {
+                setLoading(false);
+            }
+        })();
     }, [id]);
 
-    // ===== Handlers =====
-    const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-    const addExpense = async (e) => {
-        e.preventDefault();
-        setErr("");
-
-        // ===== Date validation =====
-        if (form.date) {
-            const expenseDate = new Date(form.date);
-            const endDate = form.end_date ? new Date(form.end_date) : expenseDate;
-            const tripStart = new Date(trip.start_date);
-            const tripEnd = new Date(trip.end_date);
-
-            if (expenseDate < tripStart || endDate > tripEnd) {
-                setErr("Expense dates must be within the trip duration.");
-                return;
-            }
-            if (endDate < expenseDate) {
-                setErr("Expense end date cannot be before start date.");
-                return;
-            }
-        }
-
-        try {
-            const res = await api.post("/expenses", {
-                trip_id: id,
-                category: form.category,
-                amount: Number(form.amount),
-                description: form.description || null,
-                date: form.date ? new Date(form.date).toISOString().slice(0, 10) : null,
-                end_date: form.end_date ? new Date(form.end_date).toISOString().slice(0, 10) : null,
-            });
-
-            const newExpense = res.data.data || res.data;
-            setExpenses((prev) => [newExpense, ...prev]);
-            setForm({ category: "", amount: "", description: "", date: "", end_date: "" });
-        } catch (e2) {
-            setErr(e2.response?.data?.message || "Failed to add expense");
-        }
-    };
-
-    const removeExpense = async (expenseId) => {
-        try {
-            await api.delete(`/expenses/${expenseId}`);
-            setExpenses((prev) => prev.filter((x) => x.id !== expenseId));
-        } catch (e3) {
-            setErr(e3.response?.data?.message || "Failed to delete expense");
-        }
-    };
-
-    // ===== Dynamic color assignment =====
-    const baseColors = [
-        "#6A4C93", // Purple
-        "#FF6B6B", // Coral Red
-        "#4ECDC4", // Aqua Mint
-        "#FFD93D", // Yellow
-        "#1A535C", // Deep Teal
-        "#FF9F1C", // Orange
-        "#00A8E8", // Sky Blue
-        "#C77DFF", // Lavender
-        "#2EC4B6", // Emerald
-        "#F94144", // Red
-    ];
-
-    const [colorAssignments, setColorAssignments] = useState({});
-
-    useEffect(() => {
-        if (expenses.length === 0) return;
-
-        setColorAssignments((prev) => {
-            const newAssignments = { ...prev };
-            let colorIndex = Object.keys(newAssignments).length;
-
-            expenses.forEach((ex) => {
-                const category = ex.category || "Uncategorized";
-                if (!newAssignments[category]) {
-                    newAssignments[category] = baseColors[colorIndex % baseColors.length];
-                    colorIndex++;
-                }
-            });
-
-            return newAssignments;
-        });
-    }, [expenses]);
-
-    // ✅ Prepare chart data from expenses
-    const chartData = Object.values(
-        expenses.reduce((acc, ex) => {
-            const category = ex.category || "Uncategorized";
-            if (!acc[category]) acc[category] = { name: category, value: 0 };
-            acc[category].value += Number(ex.amount) || 0;
-            return acc;
-        }, {})
-    );
-
-    // ===== UI =====
     if (loading) return <p>Loading…</p>;
+
+    const totalSpent = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return (
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
             <Navbar />
-            <Link to="/dashboard">{`← Back to trips`}</Link>
+            <Link to="/dashboard">← Back to trips</Link>
             {err && <p style={{ color: "red" }}>{err}</p>}
 
             {trip ? (
                 <>
-                    <h2 style={{ marginTop: 10 }}>{trip.destination}</h2>
+                    <h2>{trip.destination}</h2>
                     <p>
                         {trip.start_date?.slice(0, 10)} → {trip.end_date?.slice(0, 10)}
                     </p>
                     <p>Budget: ${trip.budget}</p>
                     {trip.notes && <p>Notes: {trip.notes}</p>}
 
-                    <h3 style={{ marginTop: 24 }}>Add expense</h3>
-
-                    <form
-                        onSubmit={addExpense}
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "12px",
-                            width: "100%",
-                        }}
-                    >
-                        <input
-                            name="category"
-                            placeholder="Category (Hotel, Food, …)"
-                            value={form.category}
-                            onChange={onChange}
-                            required
-                            style={{
-                                width: "100%",
-                                padding: "10px",
-                                borderRadius: "6px",
-                                border: "1px solid #ccc",
-                                fontSize: "1rem",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                        <input
-                            type="number"
-                            name="amount"
-                            placeholder="Amount"
-                            value={form.amount}
-                            onChange={onChange}
-                            required
-                            style={{
-                                width: "100%",
-                                padding: "10px",
-                                borderRadius: "6px",
-                                border: "1px solid #ccc",
-                                fontSize: "1rem",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                        <input
-                            name="description"
-                            placeholder="Description"
-                            value={form.description}
-                            onChange={onChange}
-                            style={{
-                                width: "100%",
-                                padding: "10px",
-                                borderRadius: "6px",
-                                border: "1px solid #ccc",
-                                fontSize: "1rem",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                        <input
-                            type="date"
-                            name="date"
-                            value={form.date}
-                            onChange={onChange}
-                            style={{
-                                width: "100%",
-                                padding: "10px",
-                                borderRadius: "6px",
-                                border: "1px solid #ccc",
-                                fontSize: "1rem",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                        {/* ✅ End date only appears for hotels */}
-                        {form.category.toLowerCase() === "hotel" && (
-                            <input
-                                type="date"
-                                name="end_date"
-                                value={form.end_date || ""}
-                                onChange={onChange}
-                                placeholder="End date"
-                                style={{
-                                    width: "100%",
-                                    padding: "10px",
-                                    borderRadius: "6px",
-                                    border: "1px solid #ccc",
-                                    fontSize: "1rem",
-                                    boxSizing: "border-box",
-                                }}
-                            />
-                        )}
-                        <button
-                            type="submit"
-                            style={{
-                                gridColumn: "1 / -1",
-                                padding: "12px",
-                                backgroundColor: "var(--primary)",
-                                borderRadius: "8px",
-                                color: "white",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                border: "none",
-                            }}
-                            onMouseOver={(e) =>
-                                (e.target.style.backgroundColor = "var(--primary-hover)")
-                            }
-                            onMouseOut={(e) =>
-                                (e.target.style.backgroundColor = "var(--primary)")
-                            }
-                        >
-                            Add Expense
-                        </button>
-                    </form>
-
-                    {/* ===== Chart Section ===== */}
+                    <ExpenseForm trip={trip} tripId={id} setExpenses={setExpenses} setErr={setErr} />
                     {expenses.length > 0 && (
-                        <div
-                            style={{
-                                width: "100%",
-                                maxWidth: "500px",
-                                margin: "20px auto",
-                                background: "#fff",
-                                border: "1px solid #ddd",
-                                borderRadius: "8px",
-                                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                                padding: "16px",
-                            }}
-                        >
-                            <h4 style={{ textAlign: "center", marginBottom: "10px" }}>
-                                Expense Breakdown by Category
-                            </h4>
-                            <ResponsiveContainer width="100%" height={280}>
-                                <PieChart>
-                                    <Pie
-                                        data={chartData}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={90}
-                                        label={({ name, percent }) =>
-                                            `${name} ${(percent * 100).toFixed(0)}%`
-                                        }
-                                        labelLine={false}
-                                    >
-                                        {chartData.map((entry, index) => (
-                                            <Cell
-                                                key={`cell-${index}`}
-                                                fill={
-                                                    colorAssignments[entry.name] ||
-                                                    baseColors[index % baseColors.length]
-                                                }
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value, name) => [`$${value}`, name]}
-                                        contentStyle={{ borderRadius: "8px" }}
-                                    />
-                                    <Legend
-                                        verticalAlign="bottom"
-                                        iconType="circle"
-                                        wrapperStyle={{ marginTop: "10px" }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-
-                    {/* ===== Expense Summary ===== */}
-                    <h3 style={{ marginTop: 24 }}>
-                        Expenses{" "}
-                        {expenses.length > 0 && (
-                            <>
-                                <span
-                                    style={{
-                                        fontWeight: 500,
-                                        fontSize: "1rem",
-                                        color: "#555",
-                                    }}
-                                >
-                                    — Total Spent: $
-                                    {expenses
-                                        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
-                                        .toFixed(2)}
-                                </span>
-                                <br />
-                                <span
-                                    style={{
-                                        fontWeight: 500,
-                                        fontSize: "0.95rem",
-                                        color:
-                                            expenses.reduce(
-                                                (sum, e) => sum + (Number(e.amount) || 0),
-                                                0
-                                            ) > trip.budget
-                                                ? "red"
-                                                : "green",
-                                    }}
-                                >
-                                    Budget Left: $
-                                    {(
-                                        trip.budget -
-                                        expenses.reduce(
-                                            (sum, e) => sum + (Number(e.amount) || 0),
-                                            0
-                                        )
-                                    ).toFixed(2)}
-                                </span>
-                            </>
-                        )}
-                    </h3>
-
-                    {/* ===== Expense List ===== */}
-                    {expenses.length === 0 ? (
-                        <p>No expenses yet.</p>
-                    ) : (
-                        <ul
-                            style={{
-                                padding: 0,
-                                listStyle: "none",
-                                marginTop: "1rem",
-                            }}
-                        >
-                            {expenses.map((ex) => (
-                                <li
-                                    key={ex.id}
-                                    className="card"
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        padding: "12px 16px",
-                                        marginBottom: "10px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "8px",
-                                        backgroundColor: "#fff",
-                                    }}
-                                >
-                                    <div>
-                                        <strong>{ex.category || "Expense"}</strong>
-                                        {ex.amount !== undefined && <span> — ${ex.amount}</span>}
-                                        {ex.date && (
-                                            <span style={{ opacity: 0.7 }}>
-                                                {" "}
-                                                on {ex.date.slice(0, 10)}
-                                                {ex.end_date
-                                                    ? ` → ${ex.end_date.slice(0, 10)}`
-                                                    : ""}
-                                            </span>
-                                        )}
-                                        {ex.description && (
-                                            <div
-                                                style={{
-                                                    marginTop: "4px",
-                                                    fontSize: "0.9rem",
-                                                    opacity: 0.8,
-                                                }}
-                                            >
-                                                {ex.description}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <button onClick={() => removeExpense(ex.id)}>Delete</button>
-                                </li>
-                            ))}
-                        </ul>
+                        <>
+                            <ExpenseChart expenses={expenses} />
+                            <h3 style={{ marginTop: 20 }}>
+                                Total Spent: ${totalSpent.toFixed(2)} | Budget Left: $
+                                {(trip.budget - totalSpent).toFixed(2)}
+                            </h3>
+                            <ExpenseList expenses={expenses} setExpenses={setExpenses} setErr={setErr} />
+                        </>
                     )}
                 </>
             ) : (

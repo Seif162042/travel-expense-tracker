@@ -14,8 +14,23 @@ export default function ExpenseFilters({ expenses, onChange }) {
         let list = [...expenses];
         if (filter !== "all") list = list.filter(e => e.category === filter);
 
-        if (sort === "amount") list.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
-        else list.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        if (sort === "amount") {
+            list.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
+        } else {
+            // Sort by date (oldest first)
+            list.sort((a, b) => {
+                const dateA = a.date ? new Date(a.date) : null;
+                const dateB = b.date ? new Date(b.date) : null;
+
+                // Put items without dates at the end
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+
+                // Sort ascending (oldest first)
+                return dateA.getTime() - dateB.getTime();
+            });
+        }
 
         onChange(list);
     }, [expenses, filter, sort, onChange]);

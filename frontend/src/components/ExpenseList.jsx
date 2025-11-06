@@ -14,6 +14,7 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
             date: expense.date ? expense.date.slice(0, 10) : "",
             end_date: expense.end_date ? expense.end_date.slice(0, 10) : "",
         });
+        setErr(""); // Clear any previous errors when starting to edit
     };
 
     const saveEdit = async (id) => {
@@ -63,6 +64,7 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                 prev.map((e) => (e.id === id ? { ...e, ...updated } : e))
             );
             setEditingId(null);
+            setErr(""); // Clear error on successful save
         } catch (e) {
             console.error("Update failed:", e.response?.data || e);
             setErr(
@@ -102,41 +104,46 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                     }}
                 >
                     {editingId === ex.id ? (
-                        <div style={{ flex: 1 }}>
-                            <input
-                                value={editData.category}
-                                onChange={(e) =>
-                                    setEditData({ ...editData, category: e.target.value })
-                                }
-                                style={{ width: "20%", marginRight: "8px" }}
-                            />
-                            <input
-                                type="number"
-                                value={editData.amount}
-                                onChange={(e) =>
-                                    setEditData({ ...editData, amount: e.target.value })
-                                }
-                                style={{ width: "15%", marginRight: "8px" }}
-                            />
-                            <input
-                                type="date"
-                                value={editData.date}
-                                onChange={(e) =>
-                                    setEditData({ ...editData, date: e.target.value })
-                                }
-                                style={{ marginRight: "8px" }}
-                            />
-                            <input
-                                type="date"
-                                value={editData.end_date}
-                                onChange={(e) =>
-                                    setEditData({ ...editData, end_date: e.target.value })
-                                }
-                                style={{ marginRight: "8px" }}
-                            />
-                            <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
-                            <button onClick={() => setEditingId(null)}>✖ Cancel</button>
-                        </div>
+                        <>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <input
+                                    value={editData.category}
+                                    onChange={(e) =>
+                                        setEditData({ ...editData, category: e.target.value })
+                                    }
+                                    style={{ width: "20%" }}
+                                />
+                                <input
+                                    type="number"
+                                    value={editData.amount}
+                                    onChange={(e) =>
+                                        setEditData({ ...editData, amount: e.target.value })
+                                    }
+                                    style={{ width: "120px" }}
+                                />
+                                <input
+                                    type="date"
+                                    value={editData.date}
+                                    onChange={(e) =>
+                                        setEditData({ ...editData, date: e.target.value })
+                                    }
+                                />
+                                <input
+                                    type="date"
+                                    value={editData.end_date}
+                                    onChange={(e) =>
+                                        setEditData({ ...editData, end_date: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div style={{ display: "flex", gap: "6px" }}>
+                                <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
+                                <button onClick={() => {
+                                    setEditingId(null);
+                                    setErr(""); // Clear error when canceling
+                                }}>✖ Cancel</button>
+                            </div>
+                        </>
                     ) : (
                         <>
                             <div>

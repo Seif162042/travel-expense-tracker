@@ -1,3 +1,23 @@
+/**
+ * Feed Page Component
+ * 
+ * This page displays a public feed of all trips from all users, allowing users to explore
+ * other people's travel plans.
+ * 
+ * Functionality:
+ * - Fetches all public trips from the /trips/feed endpoint
+ * - Displays trips in a card-based grid layout
+ * - Shows trip details: destination, dates, budget, and owner name
+ * - Handles loading and error states
+ * - Provides an empty state when no trips are available
+ * 
+ * Flow:
+ * 1. On component mount, fetches all public trips
+ * 2. Displays loading indicator while fetching
+ * 3. Renders trip cards in a grid layout
+ * 4. Shows empty message if no trips exist
+ * 5. Shows error message if fetch fails
+ */
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";

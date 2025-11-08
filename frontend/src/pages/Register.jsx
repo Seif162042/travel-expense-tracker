@@ -1,3 +1,21 @@
+/**
+ * Register Page Component
+ * 
+ * This page handles new user registration by allowing users to create an account.
+ * 
+ * Functionality:
+ * - Displays a registration form with name, email, and password fields
+ * - Submits user data to the backend API to create a new account
+ * - Redirects users to the login page after successful registration
+ * - Shows error messages if registration fails
+ * - Provides a link to the login page for existing users
+ * 
+ * Flow:
+ * 1. User enters name, email, and password
+ * 2. On form submission, sends POST request to /users/register
+ * 3. If successful, navigates to /login
+ * 4. If failed, displays error message
+ */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";

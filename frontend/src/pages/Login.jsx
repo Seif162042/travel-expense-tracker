@@ -1,3 +1,21 @@
+/**
+ * Login Page Component
+ * 
+ * This page handles user authentication by allowing users to log in with their email and password.
+ * 
+ * Functionality:
+ * - Displays a login form with email and password fields
+ * - Validates user credentials through the AuthContext
+ * - Redirects authenticated users to the feed page
+ * - Shows error messages for invalid login attempts
+ * - Provides a link to the registration page for new users
+ * 
+ * Flow:
+ * 1. User enters email and password
+ * 2. On form submission, calls login function from AuthContext
+ * 3. If successful, navigates to /feed
+ * 4. If failed, displays error message
+ */
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";

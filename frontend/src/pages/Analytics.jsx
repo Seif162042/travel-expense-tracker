@@ -1,3 +1,31 @@
+/**
+ * Analytics Page Component
+ * 
+ * This page provides comprehensive analytics and visualizations of travel expenses across
+ * all trips with filtering capabilities.
+ * 
+ * Functionality:
+ * - Fetches all trips and expenses data on mount
+ * - Provides filters: trip selection, date range (from/to dates)
+ * - Calculates summary metrics: total trips, total spent, average per trip
+ * - Displays three types of charts:
+ *   1. Bar Chart: Spending by destination (shows budget per trip)
+ *   2. Line Chart: Spending trend over time (daily expense aggregation)
+ *   3. Pie Chart: Spending breakdown by category
+ * - Handles loading and error states
+ * 
+ * Data Processing:
+ * - Filters expenses based on selected trip and date range
+ * - Aggregates expenses by date for trend analysis
+ * - Groups expenses by category for pie chart
+ * - Calculates totals and averages from filtered data
+ * 
+ * Flow:
+ * 1. Fetches trips and expenses in parallel on mount
+ * 2. Applies filters to expense data based on user selections
+ * 3. Processes filtered data into chart-friendly formats
+ * 4. Renders summary cards and three chart visualizations
+ */
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";

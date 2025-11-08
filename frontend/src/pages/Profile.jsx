@@ -1,3 +1,20 @@
+/**
+ * Profile Page Component
+ * 
+ * This page displays the authenticated user's profile information.
+ * 
+ * Functionality:
+ * - Fetches and displays the current user's profile data from the API
+ * - Shows user details: name, email, and user ID
+ * - Handles loading and error states during data fetch
+ * - Provides a clean, readable display of profile information
+ * 
+ * Flow:
+ * 1. On component mount, fetches user profile from /users/me endpoint
+ * 2. Displays loading indicator while fetching
+ * 3. Renders profile information once loaded
+ * 4. Shows error message if fetch fails
+ */
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";

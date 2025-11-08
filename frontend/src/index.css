@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Reset problematic default styles but keep functionality */
 * {
@@ -49,5 +47,6 @@ button[type="submit"] {
 }
 
 .collapsible.open {
-  max-height: 800px; /* enough for your charts */
+  max-height: 800px;
+  /* enough for charts */
 }

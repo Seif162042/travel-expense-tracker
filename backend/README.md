@@ -1,5 +1,14 @@
 # 🧭 Travel Expense Tracker — Backend
 
+## 🌐 Live Demo
+
+**API Base URL:** https://travel-expense-tracker-n1wt.onrender.com/api  
+**API Documentation (Swagger):** https://travel-expense-tracker-n1wt.onrender.com/docs
+
+Try it out: Visit the Swagger docs to test API endpoints interactively!
+
+---
+
 ## 📘 Overview
 This is the backend API for the **Travel Expense Tracker** project.  
 It is built with **Node.js, Express, and PostgreSQL**, following a modular architecture with controllers, routes, and middleware.

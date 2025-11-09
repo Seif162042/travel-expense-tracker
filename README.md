@@ -9,16 +9,10 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 ## 📸 Screenshots
 
-> **Note:** Add 2-3 screenshots of your application here
-> - Dashboard with trips list
-> - Trip details with expenses
-> - Analytics page with charts
 
-<!-- Example format:
-![Dashboard](./docs/screenshots/dashboard.png)
-![Trip Details](./docs/screenshots/trip-details.png)
-![Analytics](./docs/screenshots/analytics.png)
--->
+[Dashboard](./screenshots/dashboard.png)
+[Trip Details](./screenshots/trip-details.png)
+[Analytics](./screenshots/analytics.png)
 
 ---
 
@@ -472,7 +466,7 @@ We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 
 ## 👤 Author
 
-**Seif**
+**Seifeldin**
 - GitHub: [@Seif162042](https://github.com/Seif162042)
 - Project Repository: [travel-expense-tracker](https://github.com/Seif162042/travel-expense-tracker)
 

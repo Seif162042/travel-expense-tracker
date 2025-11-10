@@ -8,7 +8,6 @@
  * 
  * Includes validation to prevent overlapping trips for the same user.
  */
-// backend/src/controllers/tripController.js
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
@@ -92,13 +91,13 @@ export const getTripById = async (req, res) => {
  * Prevents users from creating trips that overlap with existing trips
  */
 export const createTrip = async (req, res) => {
-        try {
-        const user_id = req.user?.id;
-        if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-        const { title, destination, start_date, end_date, budget } = req.body;
-        // Validate required fields
-        if (!destination || !start_date || !end_date)
+    const { title, destination, start_date, end_date, budget } = req.body;
+    // Validate required fields
+    if (!destination || !start_date || !end_date)
       return res.status(400).json({ message: "All fields required" });
 
     // Validate date order

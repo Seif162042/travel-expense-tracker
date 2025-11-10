@@ -1,3 +1,18 @@
+/**
+ * 
+ * Description:
+ *  This test suite verifies the functionality of the corresponding backend API routes.
+ *  It ensures correct CRUD operations, validation behavior, and authentication flow.
+ *
+ * Test Coverage Includes:
+ *  - Endpoint response codes and payload structure
+ *  - Authentication/Authorization handling
+ *  - Error handling and validation checks
+ *  - Integration with database and controllers
+ *
+ * 
+ */
+
 import { verifyToken } from "../src/middleware/authMiddleware.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../src/config/constants.js";

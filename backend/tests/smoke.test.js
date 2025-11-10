@@ -1,3 +1,18 @@
+/**
+ * 
+ * Description:
+ *  This test suite verifies the functionality of the corresponding backend API routes.
+ *  It ensures correct CRUD operations, validation behavior, and authentication flow.
+ *
+ * Test Coverage Includes:
+ *  - Endpoint response codes and payload structure
+ *  - Authentication/Authorization handling
+ *  - Error handling and validation checks
+ *  - Integration with database and controllers
+ *
+ * 
+ */
+
 // backend/tests/smoke.test.js
 import request from "supertest";
 import app from "../src/app.js";
@@ -69,8 +84,9 @@ test("auth + trips + expenses basic flow", async () => {
         .set("Authorization", `Bearer ${token}`);
 
     expect(listTrips.status).toBe(200);
-    expect(Array.isArray(listTrips.body)).toBe(true);
-    expect(listTrips.body.find(t => t.id === tripId)).toBeTruthy();
+    expect(Array.isArray(listTrips.body.data || listTrips.body)).toBe(true);
+    expect((listTrips.body.data || listTrips.body).find(t => t.id === tripId)).toBeTruthy();
+
 
     // Create an expense for that trip
     const createExpense = await request(app)

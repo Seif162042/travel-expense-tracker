@@ -201,7 +201,7 @@ export const removeParticipant = async (req, res) => {
         `SELECT COUNT(*) FROM trip_participants WHERE trip_id = $1 AND role = 'owner'`,
         [tripId]
       );
-      
+
       if (parseInt(ownerCount.rows[0].count) <= 1) {
         return errorResponse(res, HTTP_STATUS.BAD_REQUEST, "Cannot remove last owner");
       }

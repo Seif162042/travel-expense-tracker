@@ -10,6 +10,7 @@ import tripRoutes from "./routes/tripRoutes.js";
 import expenseRoutes from "./routes/expensesRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import tripParticipantsRoutes from './routes/tripParticipantsRoutes.js';
+import { emptyToUndefined } from "./middleware/validate.js";
 
 const app = express();
 
@@ -30,6 +31,9 @@ app.options("*", cors());
 
 // JSON body limit
 app.use(express.json({ limit: "200kb" }));
+// Normalize and sanitize request body keys globally
+app.use(emptyToUndefined);
+
 
 // Logging
 app.use(morgan(process.env.NODE_ENV === "production" ? "tiny" : "dev"));

@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import expenseRoutes from "./routes/expensesRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import tripParticipantsRoutes from './routes/tripParticipantsRoutes.js';
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/docs", swaggerServe, swaggerSetup);
+app.use('/api', tripParticipantsRoutes);
 
 /* ---------- 404 + Error handling ---------- */
 

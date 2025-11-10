@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 import {
   addParticipant,
   getParticipants,
@@ -18,7 +18,7 @@ import {
 const router = express.Router();
 
 // All routes require authentication
-router.use(authenticateToken);
+router.use(verifyToken);
 
 /**
  * @route   POST /api/trips/:tripId/participants

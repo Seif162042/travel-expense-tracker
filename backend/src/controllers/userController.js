@@ -30,7 +30,10 @@ export const registerUser = async (req, res) => {
         if (!name || !email || !password)
             return errorResponse(res, HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.REQUIRED_FIELDS);
 
-        const existing = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
+        // Normalize email to lowercase and trim whitespace
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const existing = await pool.query("SELECT id FROM users WHERE email=$1", [normalizedEmail]);
         if (existing.rows.length)
             return errorResponse(res, HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.USER_EXISTS);
 
@@ -39,7 +42,7 @@ export const registerUser = async (req, res) => {
             `INSERT INTO users (name, email, password)
        VALUES ($1,$2,$3)
        RETURNING id,name,email,created_at`,
-            [name, email, hash]
+            [name, normalizedEmail, hash]
         );
         const user = result.rows[0];
         const token = makeToken(user.id, user.email);
@@ -60,9 +63,13 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        // Normalize email to lowercase and trim whitespace
+        const normalizedEmail = email.toLowerCase().trim();
+
         const q = await pool.query(
             "SELECT id,name,email,password FROM users WHERE email=$1",
-            [email]
+            [normalizedEmail]
         );
         if (!q.rows.length)
             return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_CREDENTIALS);

@@ -145,3 +145,49 @@ After deployment, visit your live docs at:
     https://<your-app-name>.onrender.com/docs
 
 ---
+
+## 💾 Database Schema
+
+### Entity-Relationship Diagram
+
+![ER Diagram](./DB_docs/er-diagram.png)
+
+### Schema Overview
+
+The database consists of 4 main tables:
+
+**users**
+- Primary key: `id` (UUID)
+- Stores: name, email, hashed password
+- Relationships: 1:many with trips, 1:many with expenses, many:many with trips (via trip_participants)
+
+**trips**
+- Primary key: `id` (UUID)
+- Foreign key: `user_id` → users(id)
+- Stores: title, destination, budget, start_date, end_date, notes
+- Relationships: 1:many with expenses, many:many with users (via trip_participants)
+
+**expenses**
+- Primary key: `id` (UUID)
+- Foreign keys: `trip_id` → trips(id), `user_id` → users(id)
+- Stores: description, amount, category, date
+- Relationships: Many:1 with trips, many:1 with users
+
+**trip_participants** (Junction Table)
+- Composite primary key: (`trip_id`, `user_id`)
+- Foreign keys: Both columns reference their respective tables
+- Stores: role (owner/editor/viewer/member), permissions (JSONB), joined_at
+- Purpose: Implements many-to-many relationship between users and trips
+- Enables: Multi-user collaboration with role-based permissions
+
+### Indexes
+
+Performance indexes are created on:
+- `users.email` - For login queries
+- `trips.user_id` - For fetching user's trips
+- `expenses.trip_id` - For fetching trip expenses
+- `expenses.user_id` - For fetching user's expenses
+- `trip_participants.trip_id` - For participant queries
+- `trip_participants.user_id` - For user's shared trips
+
+See [schema.sql](./backend/db/schema.sql) for complete schema definition.

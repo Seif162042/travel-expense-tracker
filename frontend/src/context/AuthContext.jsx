@@ -31,18 +31,22 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const res = await api.post("/users/login", { email, password });
-            const { token, name, id } = res.data;
+
+            // Extract user object first, then destructure it
+            const { token, user: userData } = res.data;
+            const { id, name, email: userEmail } = userData;
 
             localStorage.setItem("token", token);
-            localStorage.setItem("user", JSON.stringify({ id, name, email }));
+            localStorage.setItem("user", JSON.stringify({ id, name, email: userEmail }));
 
-            setUser({ id, name, email });
-            return res.data; // ✅ Return so Login.jsx can await
+            setUser({ id, name, email: userEmail });
+            return res.data;
         } catch (err) {
             console.error("Login failed:", err.response?.data || err.message);
-            throw err; // ❗ rethrow so Login.jsx catches it
+            throw err;
         }
     };
+
 
     /**
      * Logout user and clear stored authentication data

@@ -58,6 +58,12 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 - Parameterized queries prevent SQL injection
 - Indexed columns for performance
 
+**Entity-Relationship Diagram:**
+
+![ER Diagram](./docs/ER-diagram.png)
+
+*Database schema showing tables, relationships, and cardinality. Includes many-to-many relationship via trip_participants junction table.*
+
 ### Data Flow
 
 1. **User → Frontend:** User interacts with React interface via HTTPS

@@ -5,9 +5,6 @@
  * - User login with JWT token generation
  * - User profile retrieval
  */
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { pool } from "../db.js";
 
 const pool = require('../db');
 const bcrypt = require('bcrypt');

@@ -9,12 +9,11 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { pool } from "../db.js";
 
-
 /**
  * Register a new user
  * POST /api/users/register
  */
-const register = async (req, res, next) => {
+export const registerUser = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
 
@@ -65,7 +64,7 @@ const register = async (req, res, next) => {
  * Login user
  * POST /api/users/login
  */
-const login = async (req, res, next) => {
+export const loginUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
@@ -114,7 +113,7 @@ const login = async (req, res, next) => {
  * Get current user profile
  * GET /api/users/profile
  */
-const getProfile = async (req, res, next) => {
+export const getUserProfile = async (req, res, next) => {
     try {
         const userId = req.user.userId;
 
@@ -135,7 +134,7 @@ const getProfile = async (req, res, next) => {
  * Update user profile
  * PUT /api/users/profile
  */
-const updateProfile = async (req, res, next) => {
+export const updateUserProfile = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const { name, email } = req.body;
@@ -185,11 +184,4 @@ const updateProfile = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
-
-module.exports = {
-    register,
-    login,
-    getProfile,
-    updateProfile
 };

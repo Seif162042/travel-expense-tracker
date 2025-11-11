@@ -103,14 +103,29 @@ export const getParticipants = async (req, res) => {
       return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, "Unauthorized");
     }
 
-    // Check if user is participant
-    const accessCheck = await pool.query(
-      `SELECT * FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
-      [tripId, currentUserId]
+    // Check if user is trip owner OR participant
+    const tripOwnerCheck = await pool.query(
+      `SELECT user_id FROM trips WHERE id = $1`,
+      [tripId]
     );
 
-    if (accessCheck.rows.length === 0) {
-      return errorResponse(res, HTTP_STATUS.FORBIDDEN, "You are not a participant of this trip");
+    if (tripOwnerCheck.rows.length === 0) {
+      return errorResponse(res, HTTP_STATUS.NOT_FOUND, "Trip not found");
+    }
+
+    const tripOwnerId = tripOwnerCheck.rows[0].user_id;
+    const isOwner = tripOwnerId === currentUserId;
+
+    // If not owner, check if participant
+    if (!isOwner) {
+      const accessCheck = await pool.query(
+        `SELECT * FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, currentUserId]
+      );
+
+      if (accessCheck.rows.length === 0) {
+        return errorResponse(res, HTTP_STATUS.FORBIDDEN, "You are not a participant of this trip");
+      }
     }
 
     // Get all participants with user info
@@ -130,12 +145,6 @@ export const getParticipants = async (req, res) => {
   }
 };
 
-/**
- * Get all trips user participates in
- * Returns both owned and shared trips
- * 
- * GET /api/user/participating-trips
- */
 export const getParticipatingTrips = async (req, res) => {
   try {
     const userId = req.user?.id;

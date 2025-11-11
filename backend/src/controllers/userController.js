@@ -8,99 +8,191 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { pool } from "../db.js";
-import {
-    HTTP_STATUS,
-    SUCCESS_MESSAGES,
-    ERROR_MESSAGES,
-    BCRYPT_SALT_ROUNDS,
-    JWT_SECRET,
-    JWT_EXPIRY,
-} from "../config/constants.js";
-import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 
-/** Helper to sign JWT */
-const makeToken = (id, email) =>
-    jwt.sign({ id, email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+const pool = require('../db');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-/** Register new user */
-export const registerUser = async (req, res) => {
-    console.log("DEBUG registerUser req.body:", req.body);
+/**
+ * Register a new user
+ * POST /api/users/register
+ */
+const register = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
-        if (!name || !email || !password)
-            return errorResponse(res, HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.REQUIRED_FIELDS);
 
-        const existing = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
-        if (existing.rows.length)
-            return errorResponse(res, HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.USER_EXISTS);
+        // Normalize email to lowercase and trim whitespace
+        const normalizedEmail = email.toLowerCase().trim();
 
-        const hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-        const result = await pool.query(
-            `INSERT INTO users (name, email, password)
-       VALUES ($1,$2,$3)
-       RETURNING id,name,email,created_at`,
-            [name, email, hash]
+        // Check if user already exists
+        const checkUserQuery = 'SELECT * FROM users WHERE email = $1';
+        const existingUser = await pool.query(checkUserQuery, [normalizedEmail]);
+
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ message: 'User already exists with this email' });
+        }
+
+        // Hash password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Insert new user with normalized email
+        const insertUserQuery =
+            'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email';
+        const result = await pool.query(insertUserQuery, [name, normalizedEmail, hashedPassword]);
+
+        const newUser = result.rows[0];
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: newUser.id, email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
-        const user = result.rows[0];
-        const token = makeToken(user.id, user.email);
 
-        return res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            user,
+        res.status(201).json({
+            message: 'User registered successfully',
             token,
-            message: SUCCESS_MESSAGES.USER_REGISTERED,
+            user: {
+                id: newUser.id,
+                name: newUser.name,
+                email: newUser.email
+            }
         });
-    } catch (err) {
-        console.error("Error in registerUser:", err);
-        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, ERROR_MESSAGES.SERVER_ERROR);
+    } catch (error) {
+        next(error);
     }
 };
 
-/** Login */
-export const loginUser = async (req, res) => {
+/**
+ * Login user
+ * POST /api/users/login
+ */
+const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
-        const q = await pool.query(
-            "SELECT id,name,email,password FROM users WHERE email=$1",
-            [email]
+
+        // Normalize email to lowercase and trim whitespace
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Find user by normalized email
+        const query = 'SELECT * FROM users WHERE email = $1';
+        const result = await pool.query(query, [normalizedEmail]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const user = result.rows[0];
+
+        // Compare password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
-        if (!q.rows.length)
-            return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_CREDENTIALS);
 
-        const user = q.rows[0];
-        const match = await bcrypt.compare(password, user.password);
-        if (!match)
-            return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_CREDENTIALS);
-
-        const token = makeToken(user.id, user.email);
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            user: { id: user.id, name: user.name, email: user.email },
+        res.json({
+            message: 'Login successful',
             token,
-            message: SUCCESS_MESSAGES.USER_LOGGED_IN,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
         });
-    } catch (err) {
-        console.error("Error in loginUser:", err);
-        return errorResponse(res, HTTP_STATUS.SERVER_ERROR, ERROR_MESSAGES.SERVER_ERROR);
+    } catch (error) {
+        next(error);
     }
 };
 
-/** Get profile */
-export const getUserProfile = async (req, res) => {
+/**
+ * Get current user profile
+ * GET /api/users/profile
+ */
+const getProfile = async (req, res, next) => {
     try {
-        const { id } = req.user;
-        const q = await pool.query(
-            "SELECT id,name,email,created_at FROM users WHERE id=$1::uuid",
-            [id]
-        );
-        if (!q.rows.length)
-            return res.status(404).json({ message: "User not found" });
+        const userId = req.user.userId;
 
-        return res.status(200).json(q.rows[0]);
-    } catch (err) {
-        console.error("Error in getUserProfile:", err);
-        return res.status(500).json({ message: "Failed to load user profile" });
+        const query = 'SELECT id, name, email, created_at FROM users WHERE id = $1';
+        const result = await pool.query(query, [userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        next(error);
     }
 };
 
-export default { registerUser, loginUser, getUserProfile };
+/**
+ * Update user profile
+ * PUT /api/users/profile
+ */
+const updateProfile = async (req, res, next) => {
+    try {
+        const userId = req.user.userId;
+        const { name, email } = req.body;
+
+        // Normalize email if provided
+        const normalizedEmail = email ? email.toLowerCase().trim() : null;
+
+        // Check if new email already exists (if email is being changed)
+        if (normalizedEmail) {
+            const checkEmailQuery = 'SELECT * FROM users WHERE email = $1 AND id != $2';
+            const existingUser = await pool.query(checkEmailQuery, [normalizedEmail, userId]);
+
+            if (existingUser.rows.length > 0) {
+                return res.status(400).json({ message: 'Email already in use by another account' });
+            }
+        }
+
+        // Build update query dynamically
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (name) {
+            updates.push(`name = $${paramCount}`);
+            values.push(name);
+            paramCount++;
+        }
+
+        if (normalizedEmail) {
+            updates.push(`email = $${paramCount}`);
+            values.push(normalizedEmail);
+            paramCount++;
+        }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+
+        values.push(userId);
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING id, name, email`;
+        const result = await pool.query(query, values);
+
+        res.json({
+            message: 'Profile updated successfully',
+            user: result.rows[0]
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    getProfile,
+    updateProfile
+};

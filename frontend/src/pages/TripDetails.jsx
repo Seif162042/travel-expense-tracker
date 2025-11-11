@@ -2,22 +2,28 @@
  * TripDetails Page Component
  * Displays detailed information about a specific trip including:
  * - Trip information (destination, dates, budget)
+ * - Trip participants management
  * - Form to add new expenses
  * - Chart visualization of expenses
  * - Filtered and sorted list of expenses
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
+import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import ExpenseForm from "../components/ExpenseForm";
 import ExpenseList from "../components/ExpenseList";
 import ExpenseChart from "../components/ExpenseChart";
 import ExpenseFilters from "../components/ExpenseFilters";
+import ParticipantsList from "../components/ParticipantsList";
+import AddParticipantForm from "../components/AddParticipantForm";
 
 export default function TripDetails() {
     // Get trip ID from URL parameters
     const { id } = useParams();
+    // Get current user from auth context
+    const { user } = useContext(AuthContext);
     // State for trip data
     const [trip, setTrip] = useState(null);
     // State for all expenses (unfiltered)
@@ -28,6 +34,8 @@ export default function TripDetails() {
     const [err, setErr] = useState("");
     // Loading state
     const [loading, setLoading] = useState(true);
+    // State to trigger participant list refresh
+    const [participantsKey, setParticipantsKey] = useState(0);
 
     // Load trip and its expenses when component mounts or trip ID changes
     useEffect(() => {
@@ -54,6 +62,11 @@ export default function TripDetails() {
         setFilteredExpenses(expenses);
     }, [expenses]);
 
+    // Callback when participants change (add/remove)
+    const handleParticipantsChange = () => {
+        setParticipantsKey(prev => prev + 1);
+    };
+
     // Show loading indicator while fetching data
     if (loading) return <p>Loading…</p>;
 
@@ -75,6 +88,23 @@ export default function TripDetails() {
                     <p>Budget: ${trip.budget}</p>
                     {trip.notes && <p>Notes: {trip.notes}</p>}
 
+                    {/* Participants Section */}
+                    <div style={{ marginTop: 30, marginBottom: 30 }}>
+                        <AddParticipantForm
+                            tripId={id}
+                            onSuccess={handleParticipantsChange}
+                        />
+                        <div style={{ marginTop: 20 }}>
+                            <ParticipantsList
+                                key={participantsKey}
+                                tripId={id}
+                                currentUserId={user?.id}
+                                onParticipantsChange={handleParticipantsChange}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Expenses Section */}
                     <ExpenseForm trip={trip} tripId={id} setExpenses={setExpenses} setErr={setErr} />
                     {expenses.length > 0 && (
                         <>

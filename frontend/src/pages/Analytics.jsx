@@ -61,8 +61,12 @@ export default function Analytics() {
           api.get("/trips"),
           api.get("/expenses"),
         ]);
-        setTrips(tripsRes.data);
-        setExpenses(expensesRes.data);
+        const tripsData = Array.isArray(tripsRes.data) ? tripsRes.data : (tripsRes.data.data || []);
+        const expensesData = Array.isArray(expensesRes.data) ? expensesRes.data : (expensesRes.data.data || []);
+
+
+        setTrips(tripsData);
+        setExpenses(expensesData);
       } catch (error) {
         console.error(error);
         setErr("Failed to load analytics data");

@@ -33,17 +33,22 @@ export default function Dashboard() {
   const loadTrips = async () => {
     try {
       const res = await api.get("/trips");
-      setTrips(res.data);
+
+      // FIX: Handle different response structures
+      const tripsData = Array.isArray(res.data) ? res.data : (res.data.data || []);
+      setTrips(tripsData);
 
       // Load total expenses for each trip
       // Creates a map of trip_id -> total expense amount
       const expensesObj = {};
       await Promise.all(
-        res.data.map(async (t) => {
+        tripsData.map(async (t) => {
           try {
             const expRes = await api.get(`/expenses/trip/${t.id}`);
+            // Handle different response structures for expenses
+            const expensesArray = Array.isArray(expRes.data) ? expRes.data : (expRes.data.data || []);
             // Sum all expense amounts for this trip
-            const total = expRes.data.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+            const total = expensesArray.reduce((sum, e) => sum + Number(e.amount || 0), 0);
             expensesObj[t.id] = total;
           } catch {
             // If expenses can't be loaded, default to 0
@@ -54,6 +59,7 @@ export default function Dashboard() {
       setExpensesData(expensesObj);
     } catch (error) {
       setErr("Failed to load trips");
+      setTrips([]); // Ensure trips is always an array
     } finally {
       setLoading(false);
     }
@@ -70,44 +76,44 @@ export default function Dashboard() {
       <TripList trips={trips} expensesData={expensesData} loadTrips={loadTrips} />
       <TripForm loadTrips={loadTrips} />
       {/* ===== Collapsible Analytics Overview ===== */}
-    <div
-    style={{
-        marginTop: "1.5rem",
-        background: "#f8f9fa",
-        borderRadius: "10px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        padding: "0",
-    }}
-    >
-    <button
-        onClick={() => setShowAnalytics(!showAnalytics)}
+      <div
         style={{
-        background: "var(--primary)",
-        color: "white",
-        border: "none",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontWeight: "600",
-        width: "100%",
-        textAlign: "center",
-        padding: "10px 0",
+          marginTop: "1.5rem",
+          background: "#f8f9fa",
+          borderRadius: "10px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          padding: "0",
         }}
-    >
-    {showAnalytics ? "Hide Analytics Overview ▲" : "Show Analytics Overview ▼"}
-    </button>
-
-    {showAnalytics && (
-        <div
-        style={{
-            marginTop: "1rem",
-            transition: "max-height 0.4s ease",
-            overflow: "hidden",
-        }}
+      >
+        <button
+          onClick={() => setShowAnalytics(!showAnalytics)}
+          style={{
+            background: "var(--primary)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "600",
+            width: "100%",
+            textAlign: "center",
+            padding: "10px 0",
+          }}
         >
-        <DashboardCharts trips={trips} expensesData={expensesData} />
-        </div>
-    )}
-    </div>
+          {showAnalytics ? "Hide Analytics Overview ↑" : "Show Analytics Overview ↓"}
+        </button>
+
+        {showAnalytics && (
+          <div
+            style={{
+              marginTop: "1rem",
+              transition: "max-height 0.4s ease",
+              overflow: "hidden",
+            }}
+          >
+            <DashboardCharts trips={trips} expensesData={expensesData} />
+          </div>
+        )}
+      </div>
 
     </div>
   );

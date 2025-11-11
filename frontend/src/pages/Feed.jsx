@@ -30,17 +30,20 @@ export default function Feed() {
     useEffect(() => {
         const fetchAllTrips = async () => {
             try {
-                const res = await api.get("/trips/feed");
-                setTrips(res.data);
+                const res = await api.get("/trips/feed");  // ← THIS WAS MISSING!
+                const tripsData = Array.isArray(res.data) ? res.data : (res.data.data || []);
+                setTrips(tripsData);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load feed");
+                setTrips([]);
             } finally {
                 setLoading(false);
             }
         };
         fetchAllTrips();
     }, []);
+
 
     if (loading) return <p>Loading feed...</p>;
     if (error) return <p style={{ color: "red" }}>{error}</p>;

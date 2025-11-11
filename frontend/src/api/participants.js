@@ -35,7 +35,7 @@ export const addParticipant = async (tripId, userEmail, role = 'member') => {
 export const getParticipants = async (tripId) => {
   try {
     const response = await api.get(`/trips/${tripId}/participants`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : (response.data.data || []);
   } catch (error) {
     console.error('Error fetching participants:', error);
     throw error;
@@ -62,64 +62,17 @@ export const removeParticipant = async (tripId, userId) => {
  * Update participant role or permissions
  * @param {string} tripId - UUID of the trip
  * @param {string} userId - UUID of user to update
- * @param {object} updates - Object with role and/or permissions
+ * @param {string} newRole - New role to assign
  * @returns {Promise} Response with updated participant data
  */
-export const updateParticipant = async (tripId, userId, updates) => {
+export const updateParticipantRole = async (tripId, userId, newRole) => {
   try {
-    const response = await api.patch(`/trips/${tripId}/participants/${userId}`, updates);
+    const response = await api.put(`/trips/${tripId}/participants/${userId}`, {
+      role: newRole
+    });
     return response.data;
   } catch (error) {
-    console.error('Error updating participant:', error);
+    console.error('Error updating participant role:', error);
     throw error;
   }
-};
-
-/**
- * Get all trips the current user participates in
- * @returns {Promise<Array>} Array of trips with role info
- */
-export const getParticipatingTrips = async () => {
-  try {
-    const response = await api.get('/user/participating-trips');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching participating trips:', error);
-    throw error;
-  }
-};
-
-/**
- * Check if current user can perform action on trip
- * @param {string} tripId - UUID of the trip
- * @param {string} action - Action to check (e.g., 'can_edit_trip')
- * @returns {Promise<boolean>} True if user has permission
- */
-export const checkPermission = async (tripId, action) => {
-  try {
-    const participants = await getParticipants(tripId);
-    const currentUserId = localStorage.getItem('userId'); // Adjust based on your auth setup
-    
-    const userParticipant = participants.find(p => p.user_id === currentUserId);
-    
-    if (!userParticipant) return false;
-    
-    // Owner can do everything
-    if (userParticipant.role === 'owner') return true;
-    
-    // Check specific permission
-    return userParticipant.permissions?.[action] === true;
-  } catch (error) {
-    console.error('Error checking permission:', error);
-    return false;
-  }
-};
-
-export default {
-  addParticipant,
-  getParticipants,
-  removeParticipant,
-  updateParticipant,
-  getParticipatingTrips,
-  checkPermission
 };

@@ -78,7 +78,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/docs", swaggerServe, swaggerSetup);
-app.use('/api', tripParticipantsRoutes);
+app.use('/api/trips', tripParticipantsRoutes);
 
 /* ---------- 404 + Error handling ---------- */
 

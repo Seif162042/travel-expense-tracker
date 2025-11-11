@@ -26,21 +26,21 @@ router.use(verifyToken);
  * @access  Private (Owner)
  * @body    { user_email: string, role: 'owner'|'editor'|'viewer'|'member' }
  */
-router.post('/trips/:tripId/participants', addParticipant);
+router.post('/:tripId/participants', addParticipant);
 
 /**
  * @route   GET /api/trips/:tripId/participants
  * @desc    Get all participants for a trip
  * @access  Private (Any participant)
  */
-router.get('/trips/:tripId/participants', getParticipants);
+router.get('/:tripId/participants', getParticipants);
 
 /**
  * @route   DELETE /api/trips/:tripId/participants/:userId
  * @desc    Remove a participant from a trip
  * @access  Private (Owner or self)
  */
-router.delete('/trips/:tripId/participants/:userId', removeParticipant);
+router.delete('/:tripId/participants/:userId', removeParticipant);
 
 /**
  * @route   PATCH /api/trips/:tripId/participants/:userId
@@ -48,7 +48,7 @@ router.delete('/trips/:tripId/participants/:userId', removeParticipant);
  * @access  Private (Owner only)
  * @body    { role?: string, permissions?: object }
  */
-router.patch('/trips/:tripId/participants/:userId', updateParticipant);
+router.patch('/:tripId/participants/:userId', updateParticipant);
 
 /**
  * @route   GET /api/user/participating-trips

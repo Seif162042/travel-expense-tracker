@@ -28,7 +28,7 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 ## 🏗️ Architecture
 
-![System Architecture](./docs/architecture.png)
+![System Architecture](./docs/Travel Expense Tracker Architecture.drawio)
 
 ### Architecture Overview
 
@@ -51,9 +51,10 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 - Interactive API documentation with Swagger
 
 **Database Layer (PostgreSQL):**
-- Managed PostgreSQL instance on Render
+- Serverless PostgreSQL on Neon
+- Auto-scaling with connection pooling
 - Relational data structure
-- Three main tables: users, trips, expenses
+- Four main tables: users, trips, expenses, trip_participants
 - Parameterized queries prevent SQL injection
 - Indexed columns for performance
 
@@ -61,8 +62,17 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 
 1. **User → Frontend:** User interacts with React interface via HTTPS
 2. **Frontend → Backend:** Authenticated REST API calls with JWT tokens in headers
-3. **Backend → Database:** Secure SQL queries with parameterized statements
+3. **Backend → Database:** Secure SQL queries via connection pool to Neon PostgreSQL
 4. **Response Flow:** Data flows back through all layers to the user interface
+
+### Deployment Stack
+
+| Component | Platform | URL/Notes |
+|-----------|----------|-----------|
+| Frontend | Render Static Site | https://travel-expense-tracker-frtd.onrender.com |
+| Backend | Render Web Service | https://travel-expense-tracker-n1wt.onrender.com |
+| Database | Neon PostgreSQL | Serverless, auto-scaling |
+| API Docs | Backend /docs | Swagger UI |
 
 ---
 
@@ -277,9 +287,11 @@ travel-expense-tracker/
 │   │   ├── controllers/      # Business logic
 │   │   │   ├── expenseController.js
 │   │   │   ├── tripController.js
+|   |   |   ├── tripParticipantsController.js
 │   │   │   └── userController.js
 │   │   ├── routes/           # API endpoints
 │   │   │   ├── expensesRoutes.js
+|   |   |   ├── tripParticipantsRoutes.js
 │   │   │   ├── tripRoutes.js
 │   │   │   └── userRoutes.js
 │   │   ├── middleware/       # Auth, validation, errors
@@ -302,6 +314,7 @@ travel-expense-tracker/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/       # Reusable components
+|   |   |   ├──AddParticipantForm.jsx
 │   │   │   ├── DashboardCharts.jsx
 │   │   │   ├── DashboardOverview.jsx
 │   │   │   ├── ExpenseChart.jsx
@@ -309,12 +322,15 @@ travel-expense-tracker/
 │   │   │   ├── ExpenseForm.jsx
 │   │   │   ├── ExpenseList.jsx
 │   │   │   ├── Navbar.jsx
+|   |   |   ├── ParticipantsList.jsx
 │   │   │   ├── ProtectedRoute.jsx
 │   │   │   ├── TripForm.jsx
 │   │   │   └── TripList.jsx
 │   │   ├── pages/            # Route-level pages
+|   |   |   ├── AddExpense.jsx
 │   │   │   ├── Analytics.jsx
 │   │   │   ├── Dashboard.jsx
+|   |   |   ├── Feed.jsx
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── TripDetails.jsx

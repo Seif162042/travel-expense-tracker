@@ -46,3 +46,30 @@ CREATE INDEX idx_user_email ON users(email);
 CREATE INDEX idx_trip_user ON trips(user_id);
 CREATE INDEX idx_expense_trip ON expenses(trip_id);
 CREATE INDEX idx_expense_user ON expenses(user_id);
+
+-- =========================================
+-- TRIP PARTICIPANTS TABLE (Many-to-Many Relationship)
+-- =========================================
+-- This junction table implements the many-to-many relationship
+-- between users and trips, allowing multiple users to participate
+-- in a single trip with different roles and permissions.
+--
+-- Roles: owner, editor, viewer, member
+-- Permissions: stored as JSONB for flexibility
+-- =========================================
+
+DROP TABLE IF EXISTS trip_participants CASCADE;
+CREATE TABLE trip_participants (
+    trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'member',
+    permissions JSONB,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (trip_id, user_id)
+);
+
+-- =========================================
+-- ADDITIONAL INDEXES FOR TRIP PARTICIPANTS
+-- =========================================
+CREATE INDEX idx_trip_participants_trip ON trip_participants(trip_id);
+CREATE INDEX idx_trip_participants_user ON trip_participants(user_id);

@@ -6,9 +6,6 @@
  * - Updating existing expenses
  * - Deleting expenses
  * 
- * REFACTORING: Extracted date validation to utils/dateValidation.js
- * to eliminate duplication between createExpense and updateExpense.
- * This follows the DRY (Don't Repeat Yourself) principle.
  */
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
@@ -68,8 +65,6 @@ export const getExpensesByTripId = async (req, res) => {
  * Create a new expense
  * Validates that expense dates are within the trip's date range
  * before creating the expense record
- * 
- * REFACTORED: Now uses validateExpenseDates helper to eliminate duplication
  */
 export const createExpense = async (req, res) => {
     try {
@@ -117,8 +112,6 @@ export const createExpense = async (req, res) => {
  * Update an existing expense
  * Validates that updated dates are within the trip's date range
  * Uses COALESCE to only update provided fields
- * 
- * REFACTORED: Now uses validateExpenseDates helper to eliminate duplication
  */
 export const updateExpense = async (req, res) => {
     try {

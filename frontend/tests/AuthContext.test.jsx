@@ -11,13 +11,17 @@ import { AuthProvider, AuthContext } from "../src/context/AuthContext";
 
 // Mock axios to simulate API login responses
 // Must match the exact import path used in AuthContext.jsx
+// FIXED: Mock now returns the correct structure { token, user: {...} }
 jest.mock("../api/axios", () => ({
     post: jest.fn(() =>
         Promise.resolve({
             data: {
                 token: "mock-token",
-                name: "MockUser",
-                id: 1,
+                user: {
+                    id: 1,
+                    name: "MockUser",
+                    email: "mock@example.com"
+                }
             },
         })
     ),

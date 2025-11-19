@@ -1,18 +1,19 @@
 /**
- * Expense Controller
+ * Expense Controller - REFACTORED
  * Handles all expense-related API endpoints including:
  * - Fetching expenses (all or by trip)
  * - Creating new expenses
  * - Updating existing expenses
  * - Deleting expenses
  * 
- * All operations include validation to ensure expense dates
- * stay within the associated trip's duration.
+ * REFACTORING: Extracted date validation to utils/dateValidation.js
+ * to eliminate duplication between createExpense and updateExpense.
+ * This follows the DRY (Don't Repeat Yourself) principle.
  */
-// backend/src/controllers/expenseController.js
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { errorResponse } from "../utils/responseHelpers.js";
+import { validateExpenseDates } from "../utils/dateValidation.js";
 
 /**
  * Get all expenses for the authenticated user
@@ -67,6 +68,8 @@ export const getExpensesByTripId = async (req, res) => {
  * Create a new expense
  * Validates that expense dates are within the trip's date range
  * before creating the expense record
+ * 
+ * REFACTORED: Now uses validateExpenseDates helper to eliminate duplication
  */
 export const createExpense = async (req, res) => {
     try {
@@ -80,33 +83,21 @@ export const createExpense = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // Validate date(s) within trip range
+        // Validate date(s) within trip range using helper function
         if (date) {
-            const tripQuery = await pool.query(
-                `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
-                [trip_id, user_id]
-            );
-            const trip = tripQuery.rows[0];
+            const validation = await validateExpenseDates({
+                expenseDate: date,
+                expenseEndDate: end_date,
+                tripId: trip_id,
+                userId: user_id
+            });
 
-            if (trip) {
-                const expenseStart = new Date(date);
-                const expenseEnd = end_date ? new Date(end_date) : expenseStart;
-                const tripStart = new Date(trip.start_date);
-                const tripEnd = new Date(trip.end_date);
-
-                if (expenseStart < tripStart || expenseEnd > tripEnd) {
-                    return res
-                        .status(400)
-                        .json({ message: "Expense must be within trip duration." });
-                }
-                if (expenseEnd < expenseStart) {
-                    return res
-                        .status(400)
-                        .json({ message: "Expense end date cannot be before start date." });
-                }
+            if (!validation.isValid) {
+                return res.status(400).json({ message: validation.error });
             }
         }
 
+        // Create expense record
         const result = await pool.query(
             `INSERT INTO expenses (user_id, trip_id, description, amount, category, date, end_date)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -126,6 +117,8 @@ export const createExpense = async (req, res) => {
  * Update an existing expense
  * Validates that updated dates are within the trip's date range
  * Uses COALESCE to only update provided fields
+ * 
+ * REFACTORED: Now uses validateExpenseDates helper to eliminate duplication
  */
 export const updateExpense = async (req, res) => {
     try {
@@ -151,33 +144,21 @@ export const updateExpense = async (req, res) => {
         const expenseDate = date ?? expense.current_date;
         const expenseEndDate = end_date ?? expense.current_end_date;
 
-        // Validate date(s) within trip range
+        // Validate date(s) within trip range using helper function
         if (expenseDate) {
-            const tripQuery = await pool.query(
-                `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
-                [trip_id, user_id]
-            );
-            const trip = tripQuery.rows[0];
+            const validation = await validateExpenseDates({
+                expenseDate: expenseDate,
+                expenseEndDate: expenseEndDate,
+                tripId: trip_id,
+                userId: user_id
+            });
 
-            if (trip) {
-                const expenseStart = new Date(expenseDate);
-                const expenseEnd = expenseEndDate ? new Date(expenseEndDate) : expenseStart;
-                const tripStart = new Date(trip.start_date);
-                const tripEnd = new Date(trip.end_date);
-
-                if (expenseStart < tripStart || expenseEnd > tripEnd) {
-                    return res
-                        .status(400)
-                        .json({ message: "Expense must be within trip duration." });
-                }
-                if (expenseEnd < expenseStart) {
-                    return res
-                        .status(400)
-                        .json({ message: "Expense end date cannot be before start date." });
-                }
+            if (!validation.isValid) {
+                return res.status(400).json({ message: validation.error });
             }
         }
 
+        // Update expense record
         const result = await pool.query(
             `UPDATE expenses
        SET description = COALESCE($2, description),

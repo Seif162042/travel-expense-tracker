@@ -28,7 +28,7 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 ## Architecture
 
-![System Architecture](./docs/architecture.png)
+![System Architecture](./docs/Architecture.png)
 
 ### Architecture Overview
 

@@ -1,6 +1,6 @@
-# 🧭 Travel Expense Tracker — Backend
+# Travel Expense Tracker — Backend
 
-## 🌐 Live Demo
+## Live Demo
 
 **API Base URL:** https://travel-expense-tracker-n1wt.onrender.com/api  
 **API Documentation (Swagger):** https://travel-expense-tracker-n1wt.onrender.com/docs
@@ -9,7 +9,7 @@ Try it out: Visit the Swagger docs to test API endpoints interactively!
 
 ---
 
-## 📘 Overview
+## Overview
 This is the backend API for the **Travel Expense Tracker** project.  
 It is built with **Node.js, Express, and PostgreSQL**, following a modular architecture with controllers, routes, and middleware.
 
@@ -27,7 +27,7 @@ It also includes:
 
 ---
 
-## 🚀 How to Run Locally
+## How to Run Locally
 
 ### 1️⃣ Install Dependencies
 Run the following command inside the backend folder:
@@ -51,7 +51,7 @@ http://localhost:4000
 
 ---
 
-## 🧪 Run Tests
+## Run Tests
 Execute all Jest + Supertest endpoint tests:
 
     npm test
@@ -60,12 +60,13 @@ Expected output:
 
     PASS  tests/users.test.js
     PASS  tests/trips.test.js
-    Test Suites: 5 passed, 5 total
-    Tests:       19 passed, 19 total
+    PASS  tests/expenses.test.js
+    Test Suites: 7 passed, 7 total
+    Tests:       24 passed, 24 total
 
 ---
 
-## 📜 API Documentation
+## API Documentation
 Swagger UI is available at:  
 http://localhost:4000/docs
 
@@ -73,7 +74,7 @@ You can explore and test all endpoints interactively.
 
 ---
 
-## 🧩 Project Structure
+## Project Structure
 
     backend/
     ├── src/
@@ -94,7 +95,40 @@ You can explore and test all endpoints interactively.
 
 ---
 
-## 🛡️ Security & Performance
+## Code Analysis Tools
+
+**Linting:**
+- **ESLint:** Enforces JavaScript best practices and catches common errors
+  - Configuration: `.eslintrc.json` (or package.json)
+  - Run: `npm run lint`
+  - Checks: Code style, potential bugs, best practices
+
+**Testing:**
+- **Jest:** Unit and integration testing framework
+  - Run: `npm test`
+  - Coverage: 7 test suites, 24 tests
+  - Tests: Controllers, routes, middleware, authentication, error handling
+
+**Security Analysis:**
+- **express-validator:** Input validation and sanitization
+- **Helmet:** Security headers inspection
+- **Rate limiting:** DDoS protection testing
+
+**Running All Checks:**
+```bash
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Run both
+npm run lint && npm test
+```
+
+---
+
+## Security & Performance
 - Helmet: adds secure HTTP headers  
 - Rate limiter: prevents brute-force or DoS attacks  
 - Validation: sanitizes all inputs using express-validator  
@@ -102,7 +136,7 @@ You can explore and test all endpoints interactively.
 
 ---
 
-## 🧱 Technologies
+## Technologies
 
 | Category | Tools |
 |-----------|-------|
@@ -116,7 +150,7 @@ You can explore and test all endpoints interactively.
 
 ---
 
-## 📌 Example Endpoints
+## Example Endpoints
 
 | Method | Endpoint | Description |
 |--------|-----------|-------------|
@@ -129,7 +163,7 @@ You can explore and test all endpoints interactively.
 
 ---
 
-## 🌐 Deployment
+## Deployment
 This backend can be deployed easily to:
 - Render (https://render.com)
 - Railway (https://railway.app)
@@ -146,7 +180,7 @@ After deployment, visit your live docs at:
 
 ---
 
-## 💾 Database Schema
+## Database Schema
 
 ### Entity-Relationship Diagram
 

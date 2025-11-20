@@ -2,7 +2,7 @@
 
 React-based frontend application for managing travel expenses with real-time analytics.
 
-## 🌐 Live Demo
+## Live Demo
 
 **Deployed Application:** https://travel-expense-tracker-frtd.onrender.com
 
@@ -10,7 +10,7 @@ Try it out: Register a new account to explore all features!
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Built with React 19 and Vite, following a component-based architecture with Context API for global state management.
 
@@ -30,7 +30,7 @@ Built with React 19 and Vite, following a component-based architecture with Cont
 
 ---
 
-## 📁 Component Structure
+## Component Structure
 
 ```
 src/
@@ -69,7 +69,7 @@ src/
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 ### State Management
 
@@ -120,7 +120,7 @@ localStorage.setItem('token', token);
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -164,7 +164,7 @@ npm run lint         # Run ESLint
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test Framework
 
@@ -173,9 +173,8 @@ npm run lint         # Run ESLint
 - **@testing-library/user-event** - User interaction simulation
 
 ### Test Coverage
-
 ```
-Test Suites: 6 passed, 6 total
+Test Suites: 8 passed, 8 total
 Tests: 16 passed, 16 total
 
 Coverage:
@@ -214,9 +213,43 @@ npm run test:ui
 npm run test:coverage
 ```
 
+
 ---
 
-## 🎨 Styling
+## Code Analysis Tools
+
+### Linting
+- **ESLint:** Enforces React and JavaScript best practices
+  - Configuration: `.eslintrc.json` or `eslintConfig` in package.json
+  - Run: `npm run lint`
+  - Checks: React hooks rules, accessibility, code style
+
+### Testing
+- **Vitest:** Fast unit testing framework
+  - Run: `npm test`
+  - Coverage: 8 test suites, 16 tests
+  - Tests: Components, pages, context, user interactions
+- **React Testing Library:** Component testing utilities
+  - Focuses on user-centric testing
+  - Tests component behavior, not implementation
+
+### Running All Checks
+```bash
+# Run all frontend checks
+npm run lint && npm test
+
+# With coverage report
+npm run lint && npm run test:coverage
+```
+
+**Pre-commit Hooks (if configured):**
+- Husky + lint-staged can automatically run linting before commits
+- Ensures all committed code meets quality standards
+```
+
+---
+
+## Styling
 
 ### Tailwind CSS
 
@@ -254,7 +287,7 @@ npm run test:coverage
 
 ---
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 ### JWT-based Authentication
 
@@ -288,7 +321,7 @@ localStorage.removeItem('token');
 
 ---
 
-## 📊 Features Implementation
+## Features Implementation
 
 ### Dashboard
 - Overview of all trips with summary cards
@@ -324,7 +357,7 @@ localStorage.removeItem('token');
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Vite Configuration
 
@@ -358,7 +391,7 @@ VITE_APP_NAME=Travel Expense Tracker
 
 ---
 
-## 🔗 API Endpoints Used
+## API Endpoints Used
 
 ### Authentication
 ```javascript
@@ -387,7 +420,7 @@ DELETE /api/expenses/:id           # Delete expense
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -420,7 +453,7 @@ DELETE /api/expenses/:id           # Delete expense
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Render Deployment
 
@@ -457,7 +490,7 @@ dist/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
 - Code style guidelines
@@ -467,13 +500,13 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
 
 ---
 
-## 📄 License
+## License
 
 MIT
 
 ---
 
-## 🔗 Links
+## Links
 
 - **Main Repository:** [GitHub](https://github.com/Seif162042/travel-expense-tracker)
 - **Backend Documentation:** [Backend README](../backend/README.md)

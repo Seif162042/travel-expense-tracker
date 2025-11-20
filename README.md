@@ -1,4 +1,4 @@
-# 🧳 Travel Expense Tracker
+# Travel Expense Tracker
 
 A full-stack web application for tracking travel expenses across multiple trips with real-time analytics and budget management.
 
@@ -7,16 +7,16 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 
-[Dashboard](./screenshots/dashboard.png)
-[Trip Details](./screenshots/trip-details.png)
-[Analytics](./screenshots/analytics.png)
+![Dashboard](./screenshots/dashboard.png)
+![Trip Details](./screenshots/trip-details.png)
+![Analytics](./screenshots/analytics.png)
 
 ---
 
-## 🌐 Live Demo
+## Live Demo
 
 - **Frontend Application:** https://travel-expense-tracker-frtd.onrender.com
 - **Backend API:** https://travel-expense-tracker-n1wt.onrender.com/api
@@ -26,9 +26,9 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
-![System Architecture](./docs/Travel Expense Tracker Architecture.drawio)
+![System Architecture](./docs/architecture.png)
 
 ### Architecture Overview
 
@@ -82,7 +82,7 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 
 ---
 
-## ✨ Features
+## Features
 
 ### User Management
 - 🔐 Secure registration and login with JWT authentication
@@ -249,7 +249,7 @@ Navigate to **http://localhost:5173** and start using the application!
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 
@@ -259,8 +259,8 @@ npm test
 ```
 
 **Test Coverage:**
-- 6 test suites
-- 21 tests
+- 7 test suites
+- 24 tests
 - Controllers, routes, and middleware
 
 ### Frontend Tests
@@ -271,7 +271,7 @@ npm test
 ```
 
 **Test Coverage:**
-- 6 test suites
+- 8 test suites
 - 16 tests
 - Components, pages, and context
 
@@ -379,14 +379,14 @@ travel-expense-tracker/
 ## 🔧 Code Quality & Testing
 
 ### Backend
-- **Testing:** Jest + Supertest (21 tests, 6 test suites)
+- **Testing:** Jest + Supertest (24 tests, 7 test suites)
 - **Validation:** express-validator for input validation
 - **Security:** Helmet, rate limiting, JWT authentication, bcrypt password hashing
 - **API Docs:** Swagger UI for interactive documentation
 - **Error Handling:** Centralized error handling middleware
 
 ### Frontend
-- **Testing:** Vitest + React Testing Library (16 tests, 6 test suites)
+- **Testing:** Vitest + React Testing Library (16 tests, 8 test suites)
 - **State Management:** Context API for authentication
 - **Routing:** React Router v7 with protected routes
 - **HTTP Client:** Axios with interceptors for token management
@@ -400,9 +400,34 @@ travel-expense-tracker/
 - Input validation on all endpoints
 - Strategic code comments (35 files)
 
+### Code Analysis Tools
+
+**Backend:**
+- **ESLint:** Enforces JavaScript best practices and catches common errors
+  - Run: `npm run lint` (from backend directory)
+- **Jest:** Testing framework with 24 tests across 7 test suites
+  - Run: `npm test`
+  - Coverage: Controllers, routes, middleware, and business logic
+
+**Frontend:**
+- **ESLint:** Code quality checking for React components
+  - Run: `npm run lint` (from frontend directory)
+- **Vitest:** Fast unit testing framework with 16 tests across 8 test suites
+  - Run: `npm test`
+  - Coverage: Components, pages, context, and user interactions
+
+**Running All Analysis:**
+```bash
+# Run all backend checks
+cd backend && npm test && npm run lint
+
+# Run all frontend checks
+cd frontend && npm test && npm run lint
+```
+
 ---
 
-## 🔐 Security Features
+## Security Features
 
 - **Authentication:** JWT-based with secure token storage
 - **Password Security:** bcrypt hashing with salt rounds
@@ -412,6 +437,28 @@ travel-expense-tracker/
 - **CORS:** Configured for allowed origins only
 - **SQL Injection Prevention:** Parameterized queries throughout
 - **XSS Prevention:** Input sanitization and validation
+
+---
+
+## Data Volume and Generation
+
+### Production Database
+Currently contains: **16 users, 2 trips, 1 expense, 2 trip participants**
+- Database hosted on Neon (serverless PostgreSQL)
+- Scales automatically based on usage
+
+![Database Data Volume](./screenshots/database-volume.png)
+*Current production database counts as of November 2025*
+
+### Development Data
+- Test data manually created during development
+- Sample dataset includes multiple test users, trips, and expenses across various categories
+- Generated through API endpoints during development and testing
+
+### Test Data
+- 24 backend tests with programmatically generated fixture data
+- Tests use in-memory/test database instances
+- Each test suite creates isolated test data (users, trips, expenses, participants)
 
 ---
 
@@ -475,7 +522,7 @@ Managed PostgreSQL instance with automatic backups.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on:
 - Development setup
@@ -486,7 +533,7 @@ We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 
 ---
 
-## 👤 Author
+## Author
 
 **Seifeldin**
 - GitHub: [@Seif162042](https://github.com/Seif162042)
@@ -494,40 +541,18 @@ We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
 ---
 
-## 🙏 Acknowledgments
-
-- Built as part of CODE University Software Engineering program
-- **Modules:** 
-  - SE_07 (Technical Documentation)
-  - SE_08 (Clean Code)
-  - SE_45 (Frontend Development)
-  - SE_46 (Backend Development)
-
----
-
-## 📞 Support & Feedback
+## Support & Feedback
 
 For issues, questions, or feedback:
 1. Check the [API Documentation](https://travel-expense-tracker-n1wt.onrender.com/docs)
 2. Review [CONTRIBUTING.md](./CONTRIBUTING.md)
 3. Open an issue on [GitHub](https://github.com/Seif162042/travel-expense-tracker/issues)
-
----
-
-## 🔄 Recent Updates
-
-- ✅ Frontend deployed to Render
-- ✅ Backend deployed to Render with PostgreSQL
-- ✅ Comprehensive test coverage (37 tests total)
-- ✅ Interactive API documentation with Swagger
-- ✅ Full authentication and authorization
-- ✅ Real-time analytics and data visualization
 
 ---
 

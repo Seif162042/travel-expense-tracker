@@ -11,7 +11,7 @@ A full-stack web application for tracking travel expenses across multiple trips 
 
 
 ![Dashboard](./screenshots/dashboard.png)
-![Trip Details](./screenshots/trip-details.png)
+![Trip Details](./screenshots/trp-details.png)
 ![Analytics](./screenshots/analytics.png)
 
 ---

@@ -224,4 +224,4 @@ Performance indexes are created on:
 - `trip_participants.trip_id` - For participant queries
 - `trip_participants.user_id` - For user's shared trips
 
-See [schema.sql](./backend/db/schema.sql) for complete schema definition.
+See [schema.sql](./db/schema.sql) for complete schema definition.

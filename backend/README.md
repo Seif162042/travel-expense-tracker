@@ -184,7 +184,7 @@ After deployment, visit your live docs at:
 
 ### Entity-Relationship Diagram
 
-![ER Diagram](./DB_docs/ER-diagram.png)
+![ER Diagram](./backend/DB_docs/ER-diagram.png)
 
 ### Schema Overview
 

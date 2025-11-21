@@ -1,5 +1,14 @@
 /**
  * Trip Controller
+ * Handles trip CRUD operations with:
+ * - Date validation (end date must be after start date)
+ * - Overlap prevention (prevents creating overlapping trips)
+ * - Automatic owner assignment via trip_participants table
+ * 
+ * Business Rules:
+ * - Users can only have one trip at a time (no overlapping dates)
+ * - Trip creator is automatically added as 'owner' in trip_participants
+ * - All dates must be in ISO 8601 format (YYYY-MM-DD)
  */
 import { pool } from "../db.js";
 import { HTTP_STATUS } from "../config/constants.js";
@@ -77,7 +86,9 @@ export const createTrip = async (req, res) => {
     const { title, destination, start_date, end_date, budget } = req.body;
     if (!destination || !start_date || !end_date)
       return res.status(400).json({ message: "All fields required" });
-
+    // Prevent creating overlapping trips for the same user
+    // SQL logic: new trip must end before existing starts OR start after existing ends
+    // If neither condition is true, trips overlap
     const newStart = new Date(start_date);
     const newEnd = new Date(end_date);
     if (newEnd < newStart)
@@ -91,7 +102,9 @@ export const createTrip = async (req, res) => {
     );
     if (overlap.rows.length)
       return res.status(400).json({ message: "Trip overlaps existing one" });
-
+    // Automatically add trip creator as owner in trip_participants table
+    // This establishes the M:N relationship and grants full permissions
+    // ON CONFLICT DO NOTHING prevents duplicate entries if retry occurs
     const result = await pool.query(
       `INSERT INTO trips (user_id,title,destination,start_date,end_date,budget)
        VALUES ($1,$2,$3,$4::date,$5::date,$6)

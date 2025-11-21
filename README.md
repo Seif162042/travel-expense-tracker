@@ -371,7 +371,7 @@ travel-expense-tracker/
 - **[Backend Documentation](./backend/README.md)** - API setup, endpoints, testing
 - **[Frontend Documentation](./frontend/README.md)** - Component architecture, testing
 - **[API Documentation (Swagger)](https://travel-expense-tracker-n1wt.onrender.com/docs)** - Interactive API docs
-- **[Contributing Guide](./CONTRIBUTING.md)** - Development workflow and guidelines
+- **[Contributing Guide](./SE_07/CONTRIBUTING.md)** - Development workflow and guidelines
 - **[Clean Code Principles](./CLEAN_CODE.md)** - Code quality standards followed
 
 ---

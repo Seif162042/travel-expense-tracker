@@ -24,7 +24,6 @@ const makeToken = (id, email) =>
 
 /** Register new user */
 export const registerUser = async (req, res) => {
-    console.log("DEBUG registerUser req.body:", req.body);
     try {
         const { name, email, password } = req.body;
         if (!name || !email || !password)

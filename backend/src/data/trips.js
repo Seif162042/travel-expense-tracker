@@ -33,6 +33,11 @@ export async function findTripById(id) {
     return q.rows[0];
 }
 
+export async function findTripOwnerId(id) {
+    const q = await pool.query(`SELECT user_id FROM trips WHERE id = $1`, [id]);
+    return q.rows[0]?.user_id;
+}
+
 export async function findUserTrip(id, userId) {
     const q = await pool.query("SELECT * FROM trips WHERE id=$1 AND user_id=$2", [id, userId]);
     return q.rows[0];

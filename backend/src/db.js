@@ -12,7 +12,7 @@ pg.types.setTypeParser(1184, v => v); // TIMESTAMPTZ
 
 export const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },   // Neon requires SSL
+    ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false },   // Neon requires SSL
     max: 10,                              // sensible default on Render Free
     idleTimeoutMillis: 30_000,            // close idle clients after 30s
     connectionTimeoutMillis: 10_000,      // fail fast if DB can't be reached

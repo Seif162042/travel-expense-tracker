@@ -7,7 +7,7 @@
  */
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { pool } from "../db.js";
+import * as users from "../data/users.js";
 import {
     HTTP_STATUS,
     SUCCESS_MESSAGES,
@@ -32,18 +32,12 @@ export const registerUser = async (req, res) => {
         // Normalize email to lowercase and trim whitespace
         const normalizedEmail = email.toLowerCase().trim();
 
-        const existing = await pool.query("SELECT id FROM users WHERE email=$1", [normalizedEmail]);
-        if (existing.rows.length)
+        const existing = await users.findUserIdByEmail(normalizedEmail);
+        if (existing)
             return errorResponse(res, HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.USER_EXISTS);
 
         const hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-        const result = await pool.query(
-            `INSERT INTO users (name, email, password)
-       VALUES ($1,$2,$3)
-       RETURNING id,name,email,created_at`,
-            [name, normalizedEmail, hash]
-        );
-        const user = result.rows[0];
+        const user = await users.createUser(name, normalizedEmail, hash);
         const token = makeToken(user.id, user.email);
 
         return res.status(HTTP_STATUS.CREATED).json({
@@ -66,14 +60,10 @@ export const loginUser = async (req, res) => {
         // Normalize email to lowercase and trim whitespace
         const normalizedEmail = email.toLowerCase().trim();
 
-        const q = await pool.query(
-            "SELECT id,name,email,password FROM users WHERE email=$1",
-            [normalizedEmail]
-        );
-        if (!q.rows.length)
+        const user = await users.findUserWithPasswordByEmail(normalizedEmail);
+        if (!user)
             return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_CREDENTIALS);
 
-        const user = q.rows[0];
         const match = await bcrypt.compare(password, user.password);
         if (!match)
             return errorResponse(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_CREDENTIALS);
@@ -95,14 +85,11 @@ export const loginUser = async (req, res) => {
 export const getUserProfile = async (req, res) => {
     try {
         const { id } = req.user;
-        const q = await pool.query(
-            "SELECT id,name,email,created_at FROM users WHERE id=$1::uuid",
-            [id]
-        );
-        if (!q.rows.length)
+        const user = await users.findUserById(id);
+        if (!user)
             return res.status(404).json({ message: "User not found" });
 
-        return res.status(200).json(q.rows[0]);
+        return res.status(200).json(user);
     } catch (err) {
         console.error("Error in getUserProfile:", err);
         return res.status(500).json({ message: "Failed to load user profile" });

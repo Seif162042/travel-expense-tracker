@@ -84,6 +84,15 @@ describe("Expenses API", () => {
         expect(res.statusCode).toBe(400);
     });
 
+    it("POST /api/expenses → 400 for amount that is not positive", async () => {
+        const res = await request(app)
+            .post("/api/expenses")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ trip_id: tripId, description: "Refund", amount: -20, category: "Other", date: "2025-08-04" });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it("POST /api/expenses → 401 without auth", async () => {
         const res = await request(app)
             .post("/api/expenses")

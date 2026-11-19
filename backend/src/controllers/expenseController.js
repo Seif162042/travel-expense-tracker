@@ -102,6 +102,8 @@ export const createExpense = async (req, res) => {
 
         return res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
     } catch (err) {
+        if (err.constraint === "expenses_amount_check")
+            return res.status(400).json({ message: "Amount must be greater than 0" });
         console.error("❌ Error creating expense:", err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create expense");
     }
@@ -166,6 +168,8 @@ export const updateExpense = async (req, res) => {
 
         return res.status(HTTP_STATUS.OK).json(result.rows[0]);
     } catch (err) {
+        if (err.constraint === "expenses_amount_check")
+            return res.status(400).json({ message: "Amount must be greater than 0" });
         console.error("Update expense error:", err);
         return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update expense");
     }

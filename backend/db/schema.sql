@@ -36,6 +36,7 @@ CREATE TABLE expenses (
     amount DECIMAL(10,2) NOT NULL,
     category VARCHAR(100),
     date DATE DEFAULT CURRENT_DATE,
+    end_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

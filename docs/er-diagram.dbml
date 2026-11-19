@@ -57,8 +57,7 @@ Table expenses {
   }
 
   indexes {
-    trip_id [name: 'idx_expense_trip']
-    user_id [name: 'idx_expense_user']
+    (user_id, `created_at DESC`) [name: 'idx_expense_user_created']
     (user_id, trip_id, `created_at DESC`) [name: 'idx_expense_user_trip_created']
     trip_id [name: 'idx_expense_trip_covering', note: 'INCLUDE (amount, category)']
   }

@@ -118,7 +118,7 @@ All foreign keys use `ON DELETE CASCADE`. Other constraints and indexes from [ba
 |-------|-------------|---------|
 | users | `email` unique | `users_email_key` (unique) |
 | trips | `trips_dates_check`, `trips_no_overlap` (EXCLUDE with `btree_gist`, no overlapping `[start_date, end_date)` per user) | `idx_trip_user (user_id)`, `idx_trip_created (created_at DESC)` |
-| expenses | `expenses_amount_check`, `expenses_dates_check` | `idx_expense_trip (trip_id)`, `idx_expense_user (user_id)`, `idx_expense_user_trip_created (user_id, trip_id, created_at DESC)`, `idx_expense_trip_covering (trip_id) INCLUDE (amount, category)` |
+| expenses | `expenses_amount_check`, `expenses_dates_check` | `idx_expense_user_created (user_id, created_at DESC)`, `idx_expense_user_trip_created (user_id, trip_id, created_at DESC)`, `idx_expense_trip_covering (trip_id) INCLUDE (amount, category)` |
 | trip_participants | PK `(trip_id, user_id)`, `trip_participants_role_check` | `idx_trip_participants_user (user_id)`, `idx_trip_participants_permissions` (GIN on `permissions`) |
 
 ### Data Flow

@@ -27,8 +27,11 @@ ALTER TABLE trips ADD CONSTRAINT trips_no_overlap EXCLUDE USING gist (user_id WI
 
 DROP INDEX IF EXISTS idx_user_email;
 DROP INDEX IF EXISTS idx_trip_participants_trip;
+DROP INDEX IF EXISTS idx_expense_trip;
+DROP INDEX IF EXISTS idx_expense_user;
 
 CREATE INDEX IF NOT EXISTS idx_trip_created ON trips(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_expense_user_created ON expenses(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_expense_user_trip_created ON expenses(user_id, trip_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_expense_trip_covering ON expenses(trip_id) INCLUDE (amount, category);
 CREATE INDEX IF NOT EXISTS idx_trip_participants_permissions ON trip_participants USING GIN (permissions);

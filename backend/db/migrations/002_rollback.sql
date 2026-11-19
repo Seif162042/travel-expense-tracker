@@ -13,12 +13,15 @@ ALTER TABLE expenses ALTER COLUMN trip_id DROP NOT NULL;
 ALTER TABLE expenses ALTER COLUMN user_id DROP NOT NULL;
 
 DROP INDEX IF EXISTS idx_trip_created;
+DROP INDEX IF EXISTS idx_expense_user_created;
 DROP INDEX IF EXISTS idx_expense_user_trip_created;
 DROP INDEX IF EXISTS idx_expense_trip_covering;
 DROP INDEX IF EXISTS idx_trip_participants_permissions;
 
 CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_trip_participants_trip ON trip_participants(trip_id);
+CREATE INDEX IF NOT EXISTS idx_expense_trip ON expenses(trip_id);
+CREATE INDEX IF NOT EXISTS idx_expense_user ON expenses(user_id);
 
 DROP EXTENSION IF EXISTS btree_gist;
 

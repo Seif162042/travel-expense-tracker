@@ -52,8 +52,7 @@ CREATE TABLE expenses (
 -- =========================================
 CREATE INDEX idx_trip_user ON trips(user_id);
 CREATE INDEX idx_trip_created ON trips(created_at DESC);
-CREATE INDEX idx_expense_trip ON expenses(trip_id);
-CREATE INDEX idx_expense_user ON expenses(user_id);
+CREATE INDEX idx_expense_user_created ON expenses(user_id, created_at DESC);
 CREATE INDEX idx_expense_user_trip_created ON expenses(user_id, trip_id, created_at DESC);
 CREATE INDEX idx_expense_trip_covering ON expenses(trip_id) INCLUDE (amount, category);
 

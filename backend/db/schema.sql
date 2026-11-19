@@ -18,7 +18,7 @@ CREATE TABLE users (
 DROP TABLE IF EXISTS trips CASCADE;
 CREATE TABLE trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
     destination VARCHAR(255) NOT NULL,
     budget DECIMAL(10,2),
@@ -35,8 +35,8 @@ CREATE TABLE trips (
 DROP TABLE IF EXISTS expenses CASCADE;
 CREATE TABLE expenses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     category VARCHAR(100),

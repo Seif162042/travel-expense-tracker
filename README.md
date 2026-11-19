@@ -180,6 +180,33 @@ All foreign keys use `ON DELETE CASCADE`. Other constraints and indexes from [ba
 
 ---
 
+## Use cases
+
+| # | Use case | Status |
+|---|----------|--------|
+| 1 | Register an account | Implemented |
+| 2 | Log in and get a JWT | Implemented |
+| 3 | View own profile | Implemented |
+| 4 | Create a trip (date check, no overlapping trips) | Implemented |
+| 5 | List own trips | Implemented |
+| 6 | View trip details | Implemented |
+| 7 | Edit a trip | Implemented |
+| 8 | Delete a trip (its expenses and participants are deleted too) | Implemented |
+| 9 | Browse the feed of other users' trips | Implemented |
+| 10 | Add an expense to a trip (must be within trip dates) | Implemented |
+| 11 | List expenses, all or for one trip | Implemented |
+| 12 | Edit an expense | Implemented |
+| 13 | Delete an expense | Implemented |
+| 14 | See budget and spending charts (analytics page) | Implemented |
+| 15 | Add a participant to a trip by email | Implemented |
+| 16 | View the participants of a trip | Implemented |
+| 17 | Remove a participant or leave a trip (last owner can't be removed) | Implemented |
+| 18 | Change a participant's role | Not implemented (API only: `PATCH /api/trips/:tripId/participants/:userId`, no UI) |
+| 19 | List trips I participate in | Not implemented (API only: `GET /api/trips/user/participating-trips`, no UI) |
+| 20 | Editors edit or add expenses on someone else's trip (role permissions) | Not implemented (permissions are stored but not checked) |
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Frontend

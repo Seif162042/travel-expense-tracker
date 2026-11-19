@@ -53,4 +53,18 @@ describe("Create trip transaction", () => {
         );
         expect(left.rows[0].n).toBe(0);
     });
+
+    it("POST /api/trips → only one of two parallel overlapping trips is created", async () => {
+        const create = () =>
+            request(app)
+                .post("/api/trips")
+                .set("Authorization", `Bearer ${token}`)
+                .send({ title: "Race Trip", destination: "Bergen", startDate: "2025-10-01", endDate: "2025-10-08" });
+
+        const results = await Promise.all([create(), create()]);
+        const statuses = results.map((r) => r.statusCode).sort();
+
+        expect(statuses).toEqual([201, 400]);
+        expect(results.find((r) => r.statusCode === 400).body.message).toBe("Trip overlaps existing one");
+    });
 });

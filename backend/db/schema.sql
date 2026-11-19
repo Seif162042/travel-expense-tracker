@@ -2,6 +2,8 @@
 -- Travel Expense Tracker - Database Schema
 -- =========================================
 
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
 -- USERS TABLE
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
@@ -24,7 +26,9 @@ CREATE TABLE trips (
     end_date DATE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT trips_dates_check CHECK (end_date >= start_date)
+    CONSTRAINT trips_dates_check CHECK (end_date >= start_date),
+    -- '[)' so a trip can start on the day another one ends, same as the api check
+    CONSTRAINT trips_no_overlap EXCLUDE USING gist (user_id WITH =, daterange(start_date, end_date, '[)') WITH &&)
 );
 
 -- EXPENSES TABLE

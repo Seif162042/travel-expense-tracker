@@ -135,6 +135,8 @@ export const createTrip = async (req, res) => {
       client.release();
     }
   } catch (err) {
+    if (err.constraint === "trips_no_overlap")
+      return res.status(400).json({ message: "Trip overlaps existing one" });
     console.error("Error creating trip:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create trip");
   }
@@ -177,6 +179,8 @@ export const updateTrip = async (req, res) => {
     );
     return res.status(200).json({ success: true, data: result.rows[0] });
   } catch (err) {
+    if (err.constraint === "trips_no_overlap")
+      return res.status(400).json({ message: "Trip overlaps existing one" });
     console.error("Error updating trip:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update trip");
   }

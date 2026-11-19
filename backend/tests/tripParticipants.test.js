@@ -110,6 +110,15 @@ describe("Trip Participants API (Simplified)", () => {
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
+  it("should not let the last owner remove themselves", async () => {
+    const res = await request(app)
+      .delete(`/api/trips/${tripId}/participants/${ownerId}`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .expect(400);
+
+    expect(res.body.message).toBe("Cannot remove last owner");
+  });
+
   it("should allow the owner to remove a participant", async () => {
     const res = await request(app)
       .delete(`/api/trips/${tripId}/participants/${memberId}`)

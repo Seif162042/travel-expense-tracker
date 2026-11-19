@@ -1,0 +1,89 @@
+// matches backend/db/schema.sql, paste into dbdiagram.io to export the png
+
+Project travel_expense_tracker {
+  database_type: 'PostgreSQL'
+  Note: 'needs CREATE EXTENSION btree_gist for the trips_no_overlap exclusion constraint'
+}
+
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(100) [not null]
+  email varchar(255) [not null]
+  password varchar(255) [not null]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    email [unique, name: 'users_email_key']
+  }
+}
+
+Table trips {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid
+  title varchar(100) [not null]
+  destination varchar(255) [not null]
+  budget decimal(10,2)
+  start_date date
+  end_date date
+  notes text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  checks {
+    `end_date >= start_date` [name: 'trips_dates_check']
+  }
+
+  indexes {
+    user_id [name: 'idx_trip_user']
+    `created_at DESC` [name: 'idx_trip_created']
+  }
+
+  Note: 'trips_no_overlap: EXCLUDE USING gist (user_id WITH =, daterange(start_date, end_date, \'[)\') WITH &&)'
+}
+
+Table expenses {
+  id uuid [pk, default: `gen_random_uuid()`]
+  trip_id uuid
+  user_id uuid
+  description text [not null]
+  amount decimal(10,2) [not null]
+  category varchar(100)
+  date date [default: `CURRENT_DATE`]
+  end_date date
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  checks {
+    `amount > 0` [name: 'expenses_amount_check']
+    `end_date >= date` [name: 'expenses_dates_check']
+  }
+
+  indexes {
+    trip_id [name: 'idx_expense_trip']
+    user_id [name: 'idx_expense_user']
+    (user_id, trip_id, `created_at DESC`) [name: 'idx_expense_user_trip_created']
+    trip_id [name: 'idx_expense_trip_covering', note: 'INCLUDE (amount, category)']
+  }
+}
+
+Table trip_participants {
+  trip_id uuid
+  user_id uuid
+  role varchar(50) [not null, default: 'member']
+  permissions jsonb
+  joined_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  checks {
+    `role IN ('owner', 'editor', 'viewer', 'member')` [name: 'trip_participants_role_check']
+  }
+
+  indexes {
+    (trip_id, user_id) [pk]
+    user_id [name: 'idx_trip_participants_user']
+    permissions [name: 'idx_trip_participants_permissions', note: 'USING GIN']
+  }
+}
+
+Ref: trips.user_id > users.id [delete: cascade]
+Ref: expenses.trip_id > trips.id [delete: cascade]
+Ref: expenses.user_id > users.id [delete: cascade]
+Ref: trip_participants.trip_id > trips.id [delete: cascade]
+Ref: trip_participants.user_id > users.id [delete: cascade]

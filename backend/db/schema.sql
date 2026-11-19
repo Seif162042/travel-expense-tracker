@@ -46,10 +46,12 @@ CREATE TABLE expenses (
 -- =========================================
 -- INDEXES
 -- =========================================
-CREATE INDEX idx_user_email ON users(email);
 CREATE INDEX idx_trip_user ON trips(user_id);
+CREATE INDEX idx_trip_created ON trips(created_at DESC);
 CREATE INDEX idx_expense_trip ON expenses(trip_id);
 CREATE INDEX idx_expense_user ON expenses(user_id);
+CREATE INDEX idx_expense_user_trip_created ON expenses(user_id, trip_id, created_at DESC);
+CREATE INDEX idx_expense_trip_covering ON expenses(trip_id) INCLUDE (amount, category);
 
 -- =========================================
 -- TRIP PARTICIPANTS TABLE (Many-to-Many Relationship)
@@ -76,5 +78,5 @@ CREATE TABLE trip_participants (
 -- =========================================
 -- ADDITIONAL INDEXES FOR TRIP PARTICIPANTS
 -- =========================================
-CREATE INDEX idx_trip_participants_trip ON trip_participants(trip_id);
 CREATE INDEX idx_trip_participants_user ON trip_participants(user_id);
+CREATE INDEX idx_trip_participants_permissions ON trip_participants USING GIN (permissions);

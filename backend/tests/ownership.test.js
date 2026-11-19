@@ -84,6 +84,17 @@ describe("Ownership between users", () => {
         expect(res.statusCode).toBe(404);
     });
 
+    it("POST /api/expenses → 400 on another user's trip even without a date", async () => {
+        const res = await request(app)
+            .post("/api/expenses")
+            .set("Authorization", `Bearer ${tokenB}`)
+            .send({ trip_id: tripId, description: "Sneaky", amount: 15, category: "Food" });
+        expect(res.statusCode).toBe(400);
+
+        const rows = await pool.query("SELECT count(*)::int AS n FROM expenses WHERE trip_id = $1", [tripId]);
+        expect(rows.rows[0].n).toBe(1);
+    });
+
     it("owner's trip and expense are unchanged afterwards", async () => {
         const trip = await pool.query("SELECT title FROM trips WHERE id = $1", [tripId]);
         const expense = await pool.query("SELECT amount FROM expenses WHERE id = $1", [expenseId]);

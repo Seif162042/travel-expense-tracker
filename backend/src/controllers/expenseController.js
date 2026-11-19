@@ -8,6 +8,7 @@
  * 
  */
 import * as expenses from "../data/expenses.js";
+import { findUserTripDates } from "../data/trips.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { errorResponse } from "../utils/responseHelpers.js";
 import { validateExpenseDates } from "../utils/dateValidation.js";
@@ -77,6 +78,8 @@ export const createExpense = async (req, res) => {
             if (!validation.isValid) {
                 return res.status(400).json({ message: validation.error });
             }
+        } else if (!(await findUserTripDates(trip_id, user_id))) {
+            return res.status(400).json({ message: "Trip not found or does not belong to you" });
         }
 
         // Create expense record

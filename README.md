@@ -638,6 +638,10 @@ For issues, questions, or feedback:
 2. Review [CONTRIBUTING.md](./CONTRIBUTING.md)
 3. Open an issue on [GitHub](https://github.com/Seif162042/travel-expense-tracker/issues)
 
+### Team contribution
+
+This is a solo project. I own all parts: database design, backend, frontend, tests, documentation and deployment.
+
 ---
 
 **Last Updated:** November 2025

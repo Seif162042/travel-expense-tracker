@@ -105,25 +105,35 @@ export const createTrip = async (req, res) => {
     // Automatically add trip creator as owner in trip_participants table
     // This establishes the M:N relationship and grants full permissions
     // ON CONFLICT DO NOTHING prevents duplicate entries if retry occurs
-    const result = await pool.query(
-      `INSERT INTO trips (user_id,title,destination,start_date,end_date,budget)
-       VALUES ($1,$2,$3,$4::date,$5::date,$6)
-       RETURNING id,user_id,title,destination,start_date,end_date,budget,created_at`,
-      [user_id, title ?? destination, destination, start_date, end_date, budget ?? null]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `INSERT INTO trips (user_id,title,destination,start_date,end_date,budget)
+         VALUES ($1,$2,$3,$4::date,$5::date,$6)
+         RETURNING id,user_id,title,destination,start_date,end_date,budget,created_at`,
+        [user_id, title ?? destination, destination, start_date, end_date, budget ?? null]
+      );
 
-    const trip = result.rows[0];
-    // automatically add creator as owner in participants
-    await pool.query(
-      `INSERT INTO trip_participants (trip_id,user_id,role,permissions)
-       VALUES ($1,$2,'owner',
-         '{"can_edit_trip": true, "can_delete_trip": true, "can_add_expenses": true,
-           "can_edit_expenses": true, "can_delete_expenses": true, "can_manage_participants": true}')
-       ON CONFLICT DO NOTHING`,
-      [trip.id, user_id]
-    );
+      const trip = result.rows[0];
+      // automatically add creator as owner in participants
+      await client.query(
+        `INSERT INTO trip_participants (trip_id,user_id,role,permissions)
+         VALUES ($1,$2,'owner',
+           '{"can_edit_trip": true, "can_delete_trip": true, "can_add_expenses": true,
+             "can_edit_expenses": true, "can_delete_expenses": true, "can_manage_participants": true}')
+         ON CONFLICT DO NOTHING`,
+        [trip.id, user_id]
+      );
+      await client.query("COMMIT");
 
-    return res.status(201).json({ success: true, data: trip });
+      return res.status(201).json({ success: true, data: trip });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error("Error creating trip:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to create trip");

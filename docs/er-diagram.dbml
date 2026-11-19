@@ -19,7 +19,7 @@ Table users {
 
 Table trips {
   id uuid [pk, default: `gen_random_uuid()`]
-  user_id uuid
+  user_id uuid [not null]
   title varchar(100) [not null]
   destination varchar(255) [not null]
   budget decimal(10,2)
@@ -34,7 +34,7 @@ Table trips {
 
   indexes {
     user_id [name: 'idx_trip_user']
-    `created_at DESC` [name: 'idx_trip_created']
+    (created_at [desc]) [name: 'idx_trip_created']
   }
 
   Note: 'trips_no_overlap: EXCLUDE USING gist (user_id WITH =, daterange(start_date, end_date, \'[)\') WITH &&)'
@@ -42,8 +42,8 @@ Table trips {
 
 Table expenses {
   id uuid [pk, default: `gen_random_uuid()`]
-  trip_id uuid
-  user_id uuid
+  trip_id uuid [not null]
+  user_id uuid [not null]
   description text [not null]
   amount decimal(10,2) [not null]
   category varchar(100)
@@ -57,8 +57,8 @@ Table expenses {
   }
 
   indexes {
-    (user_id, `created_at DESC`) [name: 'idx_expense_user_created']
-    (user_id, trip_id, `created_at DESC`) [name: 'idx_expense_user_trip_created']
+    (user_id, created_at [desc]) [name: 'idx_expense_user_created']
+    (user_id, trip_id, created_at [desc]) [name: 'idx_expense_user_trip_created']
     trip_id [name: 'idx_expense_trip_covering', note: 'INCLUDE (amount, category)']
   }
 }
@@ -86,3 +86,18 @@ Ref: expenses.trip_id > trips.id [delete: cascade]
 Ref: expenses.user_id > users.id [delete: cascade]
 Ref: trip_participants.trip_id > trips.id [delete: cascade]
 Ref: trip_participants.user_id > users.id [delete: cascade]
+
+Note all_indexes {'''
+  Indexes
+  users: users_email_key UNIQUE (email)
+  trips: idx_trip_user (user_id)
+  trips: idx_trip_created (created_at DESC)
+  trips: trips_no_overlap EXCLUDE USING gist (user_id WITH =, daterange(start_date, end_date, \'[)\') WITH &&)
+  expenses: idx_expense_user_created (user_id, created_at DESC)
+  expenses: idx_expense_user_trip_created (user_id, trip_id, created_at DESC)
+  expenses: idx_expense_trip_covering (trip_id) INCLUDE (amount, category)
+  trip_participants: PK (trip_id, user_id)
+  trip_participants: idx_trip_participants_user (user_id)
+  trip_participants: idx_trip_participants_permissions USING GIN (permissions)
+  primary keys: users.id, trips.id, expenses.id'''
+}

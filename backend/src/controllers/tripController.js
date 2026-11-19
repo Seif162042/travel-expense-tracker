@@ -10,7 +10,7 @@
  * - Trip creator is automatically added as 'owner' in trip_participants
  * - All dates must be in ISO 8601 format (YYYY-MM-DD)
  */
-import { pool } from "../db.js";
+import * as trips from "../data/trips.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { errorResponse } from "../utils/responseHelpers.js";
 
@@ -20,17 +20,9 @@ export const getFeedTrips = async (req, res) => {
     const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const q = await pool.query(
-      `SELECT t.id,t.user_id,u.name AS user_name,t.title,t.destination,
-              t.start_date,t.end_date,t.budget,t.created_at
-       FROM trips t
-       JOIN users u ON u.id=t.user_id
-       WHERE t.user_id != $1
-       ORDER BY t.created_at DESC LIMIT 50`,
-      [user_id]
-    );
+    const feed = await trips.findFeedTrips(user_id);
 
-    return res.status(HTTP_STATUS.OK).json({ success: true, data: q.rows });
+    return res.status(HTTP_STATUS.OK).json({ success: true, data: feed });
   } catch (err) {
     console.error("Error fetching feed:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch feed");
@@ -43,15 +35,9 @@ export const getTrips = async (req, res) => {
     const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const q = await pool.query(
-      `SELECT id,user_id,title,destination,start_date,end_date,budget,created_at
-         FROM trips
-         WHERE user_id=$1
-         ORDER BY created_at DESC LIMIT 50`,
-      [user_id]
-    );
+    const userTrips = await trips.findTripsByUser(user_id);
 
-    return res.status(HTTP_STATUS.OK).json({ success: true, data: q.rows });
+    return res.status(HTTP_STATUS.OK).json({ success: true, data: userTrips });
   } catch (err) {
     console.error("Error fetching trips:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trips");
@@ -62,15 +48,11 @@ export const getTrips = async (req, res) => {
 export const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
-    const q = await pool.query(
-      `SELECT id,user_id,title,destination,start_date,end_date,budget,created_at
-       FROM trips WHERE id=$1::uuid`,
-      [id]
-    );
-    if (!q.rows.length)
+    const trip = await trips.findTripById(id);
+    if (!trip)
       return res.status(404).json({ message: "Trip not found" });
 
-    return res.status(HTTP_STATUS.OK).json({ success: true, data: q.rows[0] });
+    return res.status(HTTP_STATUS.OK).json({ success: true, data: trip });
   } catch (err) {
     console.error("Error in getTripById:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trip");
@@ -95,45 +77,22 @@ export const createTrip = async (req, res) => {
       return res.status(400).json({ message: "End date must be after start date" });
 
     // overlap check
-    const overlap = await pool.query(
-      `SELECT id FROM trips WHERE user_id=$1
-         AND NOT ($3::date <= start_date OR $2::date >= end_date)`,
-      [user_id, start_date, end_date]
-    );
-    if (overlap.rows.length)
+    const overlap = await trips.findOverlappingTrip(user_id, start_date, end_date);
+    if (overlap)
       return res.status(400).json({ message: "Trip overlaps existing one" });
     // Automatically add trip creator as owner in trip_participants table
     // This establishes the M:N relationship and grants full permissions
     // ON CONFLICT DO NOTHING prevents duplicate entries if retry occurs
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const result = await client.query(
-        `INSERT INTO trips (user_id,title,destination,start_date,end_date,budget)
-         VALUES ($1,$2,$3,$4::date,$5::date,$6)
-         RETURNING id,user_id,title,destination,start_date,end_date,budget,created_at`,
-        [user_id, title ?? destination, destination, start_date, end_date, budget ?? null]
-      );
+    const trip = await trips.createTripWithOwner({
+      userId: user_id,
+      title: title ?? destination,
+      destination,
+      startDate: start_date,
+      endDate: end_date,
+      budget: budget ?? null,
+    });
 
-      const trip = result.rows[0];
-      // automatically add creator as owner in participants
-      await client.query(
-        `INSERT INTO trip_participants (trip_id,user_id,role,permissions)
-         VALUES ($1,$2,'owner',
-           '{"can_edit_trip": true, "can_delete_trip": true, "can_add_expenses": true,
-             "can_edit_expenses": true, "can_delete_expenses": true, "can_manage_participants": true}')
-         ON CONFLICT DO NOTHING`,
-        [trip.id, user_id]
-      );
-      await client.query("COMMIT");
-
-      return res.status(201).json({ success: true, data: trip });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
-    }
+    return res.status(201).json({ success: true, data: trip });
   } catch (err) {
     if (err.constraint === "trips_no_overlap")
       return res.status(400).json({ message: "Trip overlaps existing one" });
@@ -149,35 +108,23 @@ export const updateTrip = async (req, res) => {
     const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const existing = await pool.query(
-      "SELECT * FROM trips WHERE id=$1 AND user_id=$2",
-      [id, user_id]
-    );
-    if (!existing.rows.length)
+    const e = await trips.findUserTrip(id, user_id);
+    if (!e)
       return res.status(404).json({ message: "Trip not found or not yours" });
 
-    const e = existing.rows[0];
     const newStart = req.body.start_date ?? e.start_date;
     const newEnd = req.body.end_date ?? e.end_date;
     if (new Date(newEnd) < new Date(newStart))
       return res.status(400).json({ message: "End date must be after start date" });
 
-    const result = await pool.query(
-      `UPDATE trips SET
-         title=$2,destination=$3,start_date=$4::date,end_date=$5::date,budget=$6
-       WHERE id=$1 AND user_id=$7
-       RETURNING id,user_id,title,destination,start_date,end_date,budget,created_at`,
-      [
-        id,
-        req.body.title ?? e.title,
-        req.body.destination ?? e.destination,
-        newStart,
-        newEnd,
-        req.body.budget ?? e.budget,
-        user_id,
-      ]
-    );
-    return res.status(200).json({ success: true, data: result.rows[0] });
+    const updated = await trips.updateTrip(id, user_id, {
+      title: req.body.title ?? e.title,
+      destination: req.body.destination ?? e.destination,
+      startDate: newStart,
+      endDate: newEnd,
+      budget: req.body.budget ?? e.budget,
+    });
+    return res.status(200).json({ success: true, data: updated });
   } catch (err) {
     if (err.constraint === "trips_no_overlap")
       return res.status(400).json({ message: "Trip overlaps existing one" });
@@ -193,14 +140,11 @@ export const deleteTrip = async (req, res) => {
     const user_id = req.user?.id;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const del = await pool.query(
-      "DELETE FROM trips WHERE id=$1::uuid AND user_id=$2 RETURNING id",
-      [id, user_id]
-    );
-    if (!del.rows.length)
+    const deleted = await trips.deleteTrip(id, user_id);
+    if (!deleted)
       return res.status(404).json({ message: "Trip not found or not yours" });
 
-    return res.status(HTTP_STATUS.OK).json({ success: true, deleted: del.rows[0].id });
+    return res.status(HTTP_STATUS.OK).json({ success: true, deleted: deleted.id });
   } catch (err) {
     console.error("Error deleting trip:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to delete trip");

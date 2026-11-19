@@ -52,6 +52,8 @@ http://localhost:4000
 ---
 
 ## Run Tests
+Tests need a local PostgreSQL test database in `.env.test` (copy `.env.test.example`, load `db/schema.sql` into it). They refuse to run against anything that is not `localhost` with `test` in the url.
+
 Execute all Jest + Supertest endpoint tests:
 
     npm test
@@ -61,8 +63,9 @@ Expected output:
     PASS  tests/users.test.js
     PASS  tests/trips.test.js
     PASS  tests/expenses.test.js
-    Test Suites: 7 passed, 7 total
-    Tests:       24 passed, 24 total
+    ...
+    Test Suites: 10 passed, 10 total
+    Tests:       45 passed, 45 total
 
 ---
 
@@ -106,7 +109,7 @@ You can explore and test all endpoints interactively.
 **Testing:**
 - **Jest:** Unit and integration testing framework
   - Run: `npm test`
-  - Coverage: 7 test suites, 24 tests
+  - Coverage: 10 test suites, 45 tests
   - Tests: Controllers, routes, middleware, authentication, error handling
 
 **Security Analysis:**

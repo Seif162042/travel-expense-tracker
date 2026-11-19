@@ -274,24 +274,36 @@ cd backend
 npm install
 ```
 
-Create `.env` file in the backend directory:
+Create a `.env` file in the backend directory (see `.env.example`, never commit it):
 
 ```env
 PORT=4000
 DATABASE_URL=postgresql://username:password@localhost:5432/travel_expense_tracker
+DATABASE_SSL=false
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 NODE_ENV=development
 ```
 
-Set up the database:
+`DATABASE_SSL` defaults to on, which Neon needs. Set it to `false` for a plain local Postgres.
+
+Set up the database (from the `backend` directory):
 
 ```bash
 # Create database
 createdb travel_expense_tracker
 
-# Run schema (if you have a schema file)
-psql -d travel_expense_tracker -f schema.sql
+# Run schema (also creates the btree_gist extension)
+psql -d travel_expense_tracker -f db/schema.sql
 ```
+
+Optional: fill a local database with generated data (see [Data Volume](#data-volume-and-generation)):
+
+```bash
+npm run seed            # uses DATABASE_URL from .env
+npm run seed -- .env.seed   # or any other env file
+```
+
+The seed script refuses to run unless `DATABASE_URL` points to `localhost`.
 
 #### 3. Set up Frontend
 
@@ -337,15 +349,34 @@ Navigate to **http://localhost:5173** and start using the application!
 
 ### Backend Tests
 
+The backend tests run against a real local PostgreSQL database, never Neon. Create `backend/.env.test` from `.env.test.example`:
+
+```env
+DATABASE_URL=postgres://<user>:<password>@localhost:5432/travel_test
+DATABASE_SSL=false
+JWT_SECRET=<any-local-secret>
+```
+
+For example with Docker:
+
+```bash
+docker run -d --name travel-test-db -e POSTGRES_USER=tet -e POSTGRES_PASSWORD=tet -e POSTGRES_DB=travel_test -p 5432:5432 postgres:16
+docker exec -i travel-test-db psql -U tet -d travel_test < db/schema.sql
+```
+
+Then:
+
 ```bash
 cd backend
 npm test
 ```
 
+`tests/setupEnv.js` loads `.env.test` and stops the run if `DATABASE_URL` is not on `localhost` or does not contain `test`.
+
 **Test Coverage:**
-- 7 test suites
-- 24 tests
-- Controllers, routes, and middleware
+- 10 test suites
+- 45 tests
+- Controllers, routes, middleware, the create trip transaction, overlap and ownership rules
 
 ### Frontend Tests
 
@@ -463,7 +494,7 @@ travel-expense-tracker/
 ## 🔧 Code Quality & Testing
 
 ### Backend
-- **Testing:** Jest + Supertest (24 tests, 7 test suites)
+- **Testing:** Jest + Supertest (45 tests, 10 test suites)
 - **Validation:** express-validator for input validation
 - **Security:** Helmet, rate limiting, JWT authentication, bcrypt password hashing
 - **API Docs:** Swagger UI for interactive documentation
@@ -489,7 +520,7 @@ travel-expense-tracker/
 **Backend:**
 - **ESLint:** Enforces JavaScript best practices and catches common errors
   - Run: `npm run lint` (from backend directory)
-- **Jest:** Testing framework with 24 tests across 7 test suites
+- **Jest:** Testing framework with 45 tests across 10 test suites
   - Run: `npm test`
   - Coverage: Controllers, routes, middleware, and business logic
 
@@ -535,14 +566,26 @@ Currently contains: **16 users, 2 trips, 1 expense, 2 trip participants**
 *Current production database counts as of November 2025*
 
 ### Development Data
-- Test data manually created during development
-- Sample dataset includes multiple test users, trips, and expenses across various categories
-- Generated through API endpoints during development and testing
+`backend/db/seed.js` generates a larger dataset in a local database with `generate_series`:
+
+| Table | Rows |
+|-------|------|
+| users | 200 |
+| trips | 3,000 (15 per user) |
+| expenses | 60,000 (20 per trip) |
+| trip_participants | 3,750 (an owner for every trip, plus a viewer on every 4th trip) |
+
+- The output is deterministic. IDs come from `md5(...)::uuid` and every value is computed from the row number, so every run gives the same data
+- Trips of one user never overlap and every expense date is inside its trip
+- Categories are Hotel, Food, Transport, Activities and Other (12,000 each). Hotel expenses also get an `end_date`
+- All seed users have the password `password123` and emails like `seed-user-001@example.com`
+- Re-running deletes the old seed users first (cascade) and inserts everything again in one transaction
+- Run it with `npm run seed` from `backend`. It refuses to run unless `DATABASE_URL` points to `localhost`
 
 ### Test Data
-- 24 backend tests with programmatically generated fixture data
-- Tests use in-memory/test database instances
-- Each test suite creates isolated test data (users, trips, expenses, participants)
+- 45 backend tests with programmatically generated fixture data
+- Tests run against a local PostgreSQL test database configured in `backend/.env.test` (see [Testing](#testing))
+- Each test suite creates its own users and only deletes those users afterwards (cascade removes their trips, expenses and participants)
 
 ---
 
@@ -623,6 +666,10 @@ We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 - GitHub: [@Seif162042](https://github.com/Seif162042)
 - Project Repository: [travel-expense-tracker](https://github.com/Seif162042/travel-expense-tracker)
 
+### Team contribution
+
+This is a solo project. I own all parts: database design, backend, frontend, tests, documentation and deployment.
+
 ---
 
 ## License
@@ -637,10 +684,6 @@ For issues, questions, or feedback:
 1. Check the [API Documentation](https://travel-expense-tracker-n1wt.onrender.com/docs)
 2. Review [CONTRIBUTING.md](./CONTRIBUTING.md)
 3. Open an issue on [GitHub](https://github.com/Seif162042/travel-expense-tracker/issues)
-
-### Team contribution
-
-This is a solo project. I own all parts: database design, backend, frontend, tests, documentation and deployment.
 
 ---
 

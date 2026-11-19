@@ -30,12 +30,11 @@ describe("Trip Participants API (Simplified)", () => {
   let memberId;
   let tripId;
 
+  const testEmails = ["owner-simple-test@example.com", "member-simple-test@example.com"];
+
   beforeAll(async () => {
     // Clean DB to avoid duplicate-user errors
-    await pool.query("DELETE FROM trip_participants");
-    await pool.query("DELETE FROM expenses");
-    await pool.query("DELETE FROM trips");
-    await pool.query("DELETE FROM users WHERE email LIKE '%simple-test%'");
+    await pool.query("DELETE FROM users WHERE email = ANY($1)", [testEmails]);
 
     // Register owner
     const ownerRes = await request(app)
@@ -81,10 +80,7 @@ describe("Trip Participants API (Simplified)", () => {
   });
 
   afterAll(async () => {
-    await pool.query("DELETE FROM trip_participants");
-    await pool.query("DELETE FROM expenses");
-    await pool.query("DELETE FROM trips");
-    await pool.query("DELETE FROM users WHERE email LIKE '%simple-test%'");
+    await pool.query("DELETE FROM users WHERE email = ANY($1)", [testEmails]);
     await pool.end();
   });
 

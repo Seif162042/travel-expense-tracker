@@ -23,7 +23,8 @@ CREATE TABLE trips (
     start_date DATE,
     end_date DATE,
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT trips_dates_check CHECK (end_date >= start_date)
 );
 
 -- EXPENSES TABLE
@@ -37,7 +38,9 @@ CREATE TABLE expenses (
     category VARCHAR(100),
     date DATE DEFAULT CURRENT_DATE,
     end_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT expenses_amount_check CHECK (amount > 0),
+    CONSTRAINT expenses_dates_check CHECK (end_date >= date)
 );
 
 -- =========================================
@@ -66,7 +69,8 @@ CREATE TABLE trip_participants (
     role VARCHAR(50) NOT NULL DEFAULT 'member',
     permissions JSONB,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (trip_id, user_id)
+    PRIMARY KEY (trip_id, user_id),
+    CONSTRAINT trip_participants_role_check CHECK (role IN ('owner', 'editor', 'viewer', 'member'))
 );
 
 -- =========================================

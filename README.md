@@ -64,6 +64,63 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 
 *Database schema showing tables, relationships, and cardinality. Includes many-to-many relationship via trip_participants junction table.*
 
+The diagram source is [docs/er-diagram.dbml](./docs/er-diagram.dbml) (open it in dbdiagram.io). Same schema as Mermaid:
+
+```mermaid
+erDiagram
+    USERS ||--o{ TRIPS : owns
+    USERS ||--o{ EXPENSES : records
+    TRIPS ||--o{ EXPENSES : contains
+    TRIPS ||--o{ TRIP_PARTICIPANTS : has
+    USERS ||--o{ TRIP_PARTICIPANTS : joins
+
+    USERS {
+        uuid id PK
+        varchar name
+        varchar email UK
+        varchar password
+        timestamp created_at
+    }
+    TRIPS {
+        uuid id PK
+        uuid user_id FK
+        varchar title
+        varchar destination
+        decimal budget
+        date start_date
+        date end_date "CHECK end_date >= start_date"
+        text notes
+        timestamp created_at
+    }
+    EXPENSES {
+        uuid id PK
+        uuid trip_id FK
+        uuid user_id FK
+        text description
+        decimal amount "CHECK amount > 0"
+        varchar category
+        date date
+        date end_date "CHECK end_date >= date"
+        timestamp created_at
+    }
+    TRIP_PARTICIPANTS {
+        uuid trip_id PK, FK
+        uuid user_id PK, FK
+        varchar role "owner, editor, viewer or member"
+        jsonb permissions
+        timestamp joined_at
+    }
+```
+
+All foreign keys use `ON DELETE CASCADE`. Other constraints and indexes from [backend/db/schema.sql](./backend/db/schema.sql):
+
+| Table | Constraints | Indexes |
+|-------|-------------|---------|
+| users | `email` unique | `users_email_key` (unique) |
+| trips | `trips_dates_check`, `trips_no_overlap` (EXCLUDE with `btree_gist`, no overlapping `[start_date, end_date)` per user) | `idx_trip_user (user_id)`, `idx_trip_created (created_at DESC)` |
+| expenses | `expenses_amount_check`, `expenses_dates_check` | `idx_expense_trip (trip_id)`, `idx_expense_user (user_id)`, `idx_expense_user_trip_created (user_id, trip_id, created_at DESC)`, `idx_expense_trip_covering (trip_id) INCLUDE (amount, category)` |
+| trip_participants | PK `(trip_id, user_id)`, `trip_participants_role_check` | `idx_trip_participants_user (user_id)`, `idx_trip_participants_permissions` (GIN on `permissions`) |
+
 ### Data Flow
 
 1. **User → Frontend:** User interacts with React interface via HTTPS

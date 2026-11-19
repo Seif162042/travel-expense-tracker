@@ -4,4 +4,6 @@ export default {
     forceExit: true,
     detectOpenHandles: true,
     transform: {},
+    collectCoverageFrom: ["src/**/*.js"],
+    coverageReporters: ["text", "text-summary"],
 };

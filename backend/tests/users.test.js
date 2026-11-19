@@ -44,21 +44,21 @@ describe("Users API", () => {
     it("POST /api/users/register → 400 for duplicate email", async () => {
         // try registering same user again
         const res = await request(app).post("/api/users/register").send(validUser);
-        expect([200, 201, 400]).toContain(res.statusCode);
+        expect(res.statusCode).toBe(400);
     });
 
     it("POST /api/users/register → 400 for invalid email", async () => {
         const res = await request(app)
             .post("/api/users/register")
             .send({ name: "X", email: "not-an-email", password: "password123" });
-        expect([200, 201, 400]).toContain(res.statusCode);
+        expect(res.statusCode).toBe(400);
     });
 
     it("POST /api/users/register → 400 for weak password", async () => {
         const res = await request(app)
             .post("/api/users/register")
             .send({ name: "X", email: `weak${unique}@ex.com`, password: "123" });
-        expect([200, 201, 400]).toContain(res.statusCode);
+        expect(res.statusCode).toBe(400);
     });
 
     it("POST /api/users/login → 200 with token for valid credentials", async () => {

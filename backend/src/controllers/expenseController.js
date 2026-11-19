@@ -1,5 +1,5 @@
 /**
- * Expense Controller - REFACTORED
+ * Expense Controller
  * Handles all expense-related API endpoints including:
  * - Fetching expenses (all or by trip)
  * - Creating new expenses

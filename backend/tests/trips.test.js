@@ -61,6 +61,35 @@ describe("Trips API", () => {
         tripId = res.body.data.id;
     });
 
+    it("POST /api/trips → 400 when dates overlap an existing trip", async () => {
+        const res = await request(app)
+            .post("/api/trips")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Overlapping Trip",
+                destination: "Lyon, France",
+                startDate: "2025-06-05",
+                endDate: "2025-06-12",
+            });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.message).toBe("Trip overlaps existing one");
+    });
+
+    it("POST /api/trips → 201 when a trip starts the day the other one ends", async () => {
+        const res = await request(app)
+            .post("/api/trips")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Next Trip",
+                destination: "Brussels, Belgium",
+                startDate: "2025-06-10",
+                endDate: "2025-06-12",
+            });
+
+        expect(res.statusCode).toBe(201);
+    });
+
     it("GET /api/trips → 200 list trips (auth)", async () => {
         const res = await request(app)
             .get("/api/trips?limit=5&offset=0")

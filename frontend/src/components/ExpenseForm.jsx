@@ -19,15 +19,6 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
     // Generic onChange handler for all form inputs
     const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-    const inputStyle = {
-        width: "100%",
-        padding: "10px",
-        borderRadius: "6px",
-        border: "1px solid #ccc",
-        fontSize: "1rem",
-        boxSizing: "border-box",
-    };
-
     /**
      * Handles form submission to create a new expense
      * Validates required fields and ensures dates are within trip duration
@@ -73,22 +64,13 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
     };
 
     return (
-        <form
-            onSubmit={addExpense}
-            style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-                marginTop: "20px",
-            }}
-        >
+        <form onSubmit={addExpense} className="form-grid section">
             <input
                 name="category"
                 placeholder="Category (Hotel, Food, …)"
                 value={form.category}
                 onChange={onChange}
                 required
-                style={inputStyle}
             />
             <input
                 type="number"
@@ -97,21 +79,18 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
                 value={form.amount}
                 onChange={onChange}
                 required
-                style={inputStyle}
             />
             <input
                 name="description"
                 placeholder="Description"
                 value={form.description}
                 onChange={onChange}
-                style={inputStyle}
             />
             <input
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={onChange}
-                style={inputStyle}
             />
             {/* Show end_date field only for hotel expenses (multi-day stays) */}
             {form.category.toLowerCase() === "hotel" && (
@@ -121,22 +100,9 @@ export default function ExpenseForm({ tripId, trip, setExpenses, setErr }) {
                     value={form.end_date}
                     onChange={onChange}
                     placeholder="End date"
-                    style={inputStyle}
                 />
             )}
-            <button
-                type="submit"
-                style={{
-                    gridColumn: "1 / -1",
-                    padding: "12px",
-                    backgroundColor: "var(--primary)",
-                    borderRadius: "8px",
-                    color: "white",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: "none",
-                }}
-            >
+            <button type="submit" className="full">
                 Add Expense
             </button>
         </form>

@@ -7,7 +7,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recha
 
 export default function ExpenseChart({ expenses }) {
     // Color palette for pie chart segments
-    const COLORS = ["#6A4C93", "#FF6B6B", "#4ECDC4", "#FFD93D", "#1A535C", "#FF9F1C"];
+    const COLORS = ["#4f46e5", "#06b6d4", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
     
     // Aggregate expenses by category, summing amounts for each category
     const data = Object.values(
@@ -22,8 +22,8 @@ export default function ExpenseChart({ expenses }) {
     );
 
     return (
-        <div style={{ background: "#fff", borderRadius: "8px", padding: "16px", marginTop: "20px" }}>
-            <h4 style={{ textAlign: "center" }}>Expense Breakdown by Category</h4>
+        <div className="card section">
+            <h3 style={{ textAlign: "center" }}>Expense Breakdown by Category</h3>
             <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                     <Pie data={data} dataKey="value" nameKey="name" outerRadius={100} label>

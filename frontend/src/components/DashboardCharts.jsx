@@ -36,17 +36,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
     }));
 
   // Color palette for charts
-  const COLORS = [
-    "#6A0DAD", // deep purple
-    "#9B5DE5", // bright violet
-    "#F15BB5", // magenta
-    "#00BBF9", // cyan
-    "#00F5D4", // aqua green
-    "#FFB400", // gold
-    "#FF4C4C", // red
-    "#4CAF50", // green
-    "#2196F3", // blue
-  ];
+  const COLORS = ["#4f46e5", "#06b6d4", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
 
   // === If no data ===
   if (!trips.length) {
@@ -54,11 +44,11 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
   }
 
   return (
-    <section style={{ marginTop: "2rem" }}>
-      <h2 style={{ marginBottom: "1rem" }}>Analytics Overview</h2>
+    <section>
+      <h2>Analytics Overview</h2>
 
       {/* Bar Chart: Compare budget vs actual spending for each trip */}
-      <div style={chartCard}>
+      <div className="card section">
         <h4>Budget vs. Actual Spent</h4>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={barData}>
@@ -67,14 +57,14 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="Budget" fill="#8884d8" />
-            <Bar dataKey="Spent" fill="#82ca9d" />
+            <Bar dataKey="Budget" fill="#c7d2fe" />
+            <Bar dataKey="Spent" fill="#4f46e5" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* Pie Chart: Show budget distribution across all trips */}
-      <div style={chartCard}>
+      <div className="card section">
         <h4>Trip Budget Distribution</h4>
         {/* Only render pie chart if there's data with non-zero values */}
         {pieData.length > 0 && pieData.some((p) => p.value > 0) ? (
@@ -103,7 +93,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
       </div>
 
       {/* Line Chart: Show spending trend chronologically */}
-      <div style={chartCard}>
+      <div className="card section">
         <h4>Spending Trend Over Time</h4>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={lineData}>
@@ -112,7 +102,7 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="Spent" stroke="#6A0DAD" strokeWidth={2} />
+            <Line type="monotone" dataKey="Spent" stroke="#4f46e5" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -120,11 +110,3 @@ export default function DashboardCharts({ trips = [], expensesData = {} }) {
   );
 }
 
-const chartCard = {
-  background: "#fff",
-  border: "1px solid #eee",
-  borderRadius: "10px",
-  padding: "1rem",
-  marginBottom: "1.5rem",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-};

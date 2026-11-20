@@ -98,81 +98,42 @@ export default function TripList({ trips, expensesData, loadTrips }) {
   };
 
   return (
-    <div style={{ marginTop: "2rem" }}>
+    <div className="section">
       <h2>My Trips</h2>
-      {err && <p style={{ color: "red" }}>{err}</p>}
+      {err && <p className="error">{err}</p>}
 
       {trips.length === 0 ? (
         <p>No trips yet.</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul className="trip-list">
           {trips.map((trip) => (
-            <li
-              key={trip.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: "10px 14px",
-                borderRadius: 6,
-                marginBottom: 8,
-                background: "#fff",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+            <li key={trip.id} className="card trip-item">
               <div>
-                <Link
-                  to={`/trips/${trip.id}`}
-                  style={{ textDecoration: "none", fontWeight: 600 }}
-                >
+                <Link to={`/trips/${trip.id}`} className="trip-title">
                   {trip.destination}
                 </Link>
-                <div style={{ fontSize: "0.9rem", opacity: 0.8 }}>
+                <div className="trip-meta">
                   {trip.start_date?.slice(0, 10)} → {trip.end_date?.slice(0, 10)} | Budget: $
                   {trip.budget}
                 </div>
 
-                {/* Badges showing budget usage and days remaining */}
-                <div style={{ marginTop: "6px" }}>
+                <div className="badges">
+                  <span className="badge">{getBudgetUsed(trip)}% used</span>
                   <span
-                    style={{
-                      background: "#6a0dad",
-                      color: "white",
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      marginRight: "6px",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    {getBudgetUsed(trip)}% used
-                  </span>
-                  <span
-                    style={{
-                      background: "#eee",
-                      color:
-                        getDaysLeft(trip).includes("ago") ? "red" : "green",
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.8rem",
-                    }}
+                    className={`badge ${
+                      getDaysLeft(trip).includes("ago") ? "badge-late" : "badge-ok"
+                    }`}
                   >
                     {getDaysLeft(trip)}
                   </span>
                 </div>
               </div>
 
-              {/* Edit and Delete buttons */}
-              <div>
-                <button
-                  style={editBtn}
-                  onClick={() => handleEditClick(trip)}
-                >
+              <div className="actions">
+                <button className="btn-soft" onClick={() => handleEditClick(trip)}>
                   Edit
                 </button>
-                <button
-                  style={deleteBtn}
-                  onClick={() => deleteTrip(trip.id)}
-                >
+                <button className="btn-danger" onClick={() => deleteTrip(trip.id)}>
                   Delete
                 </button>
               </div>
@@ -181,17 +142,15 @@ export default function TripList({ trips, expensesData, loadTrips }) {
         </ul>
       )}
 
-      {/* Inline Edit Form: Shows when a trip is being edited */}
       {editingTrip && (
-        <div style={{ marginTop: "1.5rem" }}>
+        <div className="section">
           <h3>Edit Trip: {editingTrip.destination}</h3>
-          <form onSubmit={handleEditSubmit} style={formGrid}>
+          <form onSubmit={handleEditSubmit} className="form-grid">
             <input
               name="destination"
               value={form.destination}
               onChange={(e) => setForm({ ...form, destination: e.target.value })}
               required
-              style={inputStyle}
             />
             <input
               type="number"
@@ -199,7 +158,6 @@ export default function TripList({ trips, expensesData, loadTrips }) {
               value={form.budget}
               onChange={(e) => setForm({ ...form, budget: e.target.value })}
               required
-              style={inputStyle}
             />
             <input
               type="date"
@@ -207,7 +165,6 @@ export default function TripList({ trips, expensesData, loadTrips }) {
               value={form.start_date}
               onChange={(e) => setForm({ ...form, start_date: e.target.value })}
               required
-              style={inputStyle}
             />
             <input
               type="date"
@@ -215,14 +172,9 @@ export default function TripList({ trips, expensesData, loadTrips }) {
               value={form.end_date}
               onChange={(e) => setForm({ ...form, end_date: e.target.value })}
               required
-              style={inputStyle}
             />
-            <button type="submit" style={submitBtn}>Save</button>
-            <button
-              type="button"
-              style={{ ...submitBtn, background: "#aaa" }}
-              onClick={() => setEditingTrip(null)}
-            >
+            <button type="submit">Save</button>
+            <button type="button" className="btn-ghost" onClick={() => setEditingTrip(null)}>
               Cancel
             </button>
           </form>
@@ -231,46 +183,3 @@ export default function TripList({ trips, expensesData, loadTrips }) {
     </div>
   );
 }
-
-// ====== STYLES ======
-const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "1rem",
-    boxSizing: "border-box",
-};
-const formGrid = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "12px",
-  width: "100%",
-};
-const editBtn = {
-  marginRight: "8px",
-  padding: "5px 10px",
-  background: "#6a0dad",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-const deleteBtn = {
-  padding: "5px 10px",
-  background: "#b91c1c",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-const submitBtn = {
-  gridColumn: "1 / -1",
-  padding: "10px",
-  backgroundColor: "var(--primary)",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  fontWeight: "600",
-  cursor: "pointer",
-};

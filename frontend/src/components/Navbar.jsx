@@ -3,7 +3,7 @@
  * Main navigation bar for the application.
  * Displays links to different pages and handles user logout.
  */
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
@@ -11,41 +11,26 @@ export default function Navbar() {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    /**
-     * Handle logout: clear user session and redirect to login page
-     */
     const doLogout = () => {
         logout();
         navigate("/login");
     };
 
+    const linkClass = ({ isActive }) => (isActive ? "active" : undefined);
+
     return (
-        <nav
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "12px 16px",
-                borderBottom: "1px solid #ddd",
-                marginBottom: 20,
-            }}
-        >
-            <div>
-                <Link to="/dashboard" style={{ textDecoration: "none", fontWeight: 700 }}>
-                    Travel Expense Tracker
-                </Link>
-            </div>
-            <div>
-                <Link to="/feed">Feed</Link>
-            </div>
+        <nav className="navbar">
+            <Link to="/dashboard" className="navbar-brand">
+                Travel Expense Tracker
+            </Link>
 
-
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <Link to="/analytics">Analytics</Link>
-                <Link to="/Dashboard">Dashboard</Link>
-                <Link to="/profile">Profile</Link>
-                {user && <span style={{ opacity: 0.8 }}>Hi, {user.name}</span>}
-                <button onClick={doLogout}>Logout</button>
+            <div className="nav-links">
+                <NavLink to="/feed" className={linkClass}>Feed</NavLink>
+                <NavLink to="/analytics" className={linkClass}>Analytics</NavLink>
+                <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>
+                <NavLink to="/profile" className={linkClass}>Profile</NavLink>
+                {user && <span className="nav-user">Hi, {user.name}</span>}
+                <button className="btn-ghost" onClick={doLogout}>Logout</button>
             </div>
         </nav>
     );

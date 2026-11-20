@@ -49,18 +49,17 @@ export default function TripForm({ loadTrips }) {
   };
 
   return (
-    <div style={{ marginTop: "2rem" }}>
+    <div className="section">
       <h3>Add New Trip</h3>
-      {err && <p style={{ color: "red" }}>{err}</p>}
+      {err && <p className="error">{err}</p>}
 
-      <form onSubmit={handleSubmit} style={formGrid}>
+      <form onSubmit={handleSubmit} className="form-grid">
         <input
           name="destination"
           placeholder="Destination"
           value={form.destination}
           onChange={handleChange}
           required
-          style={inputStyle}
         />
         <input
           type="number"
@@ -69,7 +68,6 @@ export default function TripForm({ loadTrips }) {
           value={form.budget}
           onChange={handleChange}
           required
-          style={inputStyle}
         />
         <input
           type="date"
@@ -77,7 +75,6 @@ export default function TripForm({ loadTrips }) {
           value={form.start_date}
           onChange={handleChange}
           required
-          style={inputStyle}
         />
         <input
           type="date"
@@ -85,37 +82,11 @@ export default function TripForm({ loadTrips }) {
           value={form.end_date}
           onChange={handleChange}
           required
-          style={inputStyle}
         />
-        <button type="submit" style={submitBtn}>
+        <button type="submit" className="full">
           Add Trip
         </button>
       </form>
     </div>
   );
 }
-
-const formGrid = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "12px",
-  width: "100%",
-};
-const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "1rem",
-    boxSizing: "border-box",
-};
-const submitBtn = {
-  gridColumn: "1 / -1",
-  padding: "10px",
-  backgroundColor: "var(--primary)",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  fontWeight: "600",
-  cursor: "pointer",
-};

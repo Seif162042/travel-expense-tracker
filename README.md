@@ -64,6 +64,63 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 
 *Database schema showing tables, relationships, and cardinality. Includes many-to-many relationship via trip_participants junction table.*
 
+The diagram source is [docs/er-diagram.dbml](./docs/er-diagram.dbml) (open it in dbdiagram.io). Same schema as Mermaid:
+
+```mermaid
+erDiagram
+    USERS ||--o{ TRIPS : owns
+    USERS ||--o{ EXPENSES : records
+    TRIPS ||--o{ EXPENSES : contains
+    TRIPS ||--o{ TRIP_PARTICIPANTS : has
+    USERS ||--o{ TRIP_PARTICIPANTS : joins
+
+    USERS {
+        uuid id PK
+        varchar name
+        varchar email UK
+        varchar password
+        timestamp created_at
+    }
+    TRIPS {
+        uuid id PK
+        uuid user_id FK "NOT NULL"
+        varchar title
+        varchar destination
+        decimal budget
+        date start_date
+        date end_date "CHECK end_date >= start_date"
+        text notes
+        timestamp created_at
+    }
+    EXPENSES {
+        uuid id PK
+        uuid trip_id FK "NOT NULL"
+        uuid user_id FK "NOT NULL"
+        text description
+        decimal amount "CHECK amount > 0"
+        varchar category
+        date date
+        date end_date "CHECK end_date >= date"
+        timestamp created_at
+    }
+    TRIP_PARTICIPANTS {
+        uuid trip_id PK, FK
+        uuid user_id PK, FK
+        varchar role "owner, editor, viewer or member"
+        jsonb permissions
+        timestamp joined_at
+    }
+```
+
+All foreign keys use `ON DELETE CASCADE`. Other constraints and indexes from [backend/db/schema.sql](./backend/db/schema.sql):
+
+| Table | Constraints | Indexes |
+|-------|-------------|---------|
+| users | `email` unique | `users_email_key` (unique) |
+| trips | `user_id` NOT NULL, `trips_dates_check`, `trips_no_overlap` (EXCLUDE with `btree_gist`, no overlapping `[start_date, end_date)` per user) | `idx_trip_user (user_id)`, `idx_trip_created (created_at DESC)` |
+| expenses | `trip_id` and `user_id` NOT NULL, `expenses_amount_check`, `expenses_dates_check` | `idx_expense_user_created (user_id, created_at DESC)`, `idx_expense_user_trip_created (user_id, trip_id, created_at DESC)`, `idx_expense_trip_covering (trip_id) INCLUDE (amount, category)` |
+| trip_participants | PK `(trip_id, user_id)`, `trip_participants_role_check` | `idx_trip_participants_user (user_id)`, `idx_trip_participants_permissions` (GIN on `permissions`) |
+
 ### Data Flow
 
 1. **User → Frontend:** User interacts with React interface via HTTPS
@@ -123,6 +180,33 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 
 ---
 
+## Use cases
+
+| # | Use case | Status |
+|---|----------|--------|
+| 1 | Register an account | Implemented |
+| 2 | Log in and get a JWT | Implemented |
+| 3 | View own profile | Implemented |
+| 4 | Create a trip (date check, no overlapping trips) | Implemented |
+| 5 | List own trips | Implemented |
+| 6 | View trip details | Implemented |
+| 7 | Edit a trip | Implemented |
+| 8 | Delete a trip (its expenses and participants are deleted too) | Implemented |
+| 9 | Browse the feed of other users' trips | Implemented |
+| 10 | Add an expense to a trip (must be within trip dates) | Implemented |
+| 11 | List expenses, all or for one trip | Implemented |
+| 12 | Edit an expense | Implemented |
+| 13 | Delete an expense | Implemented |
+| 14 | See budget and spending charts (analytics page) | Implemented |
+| 15 | Add a participant to a trip by email | Implemented |
+| 16 | View the participants of a trip | Implemented |
+| 17 | Remove a participant or leave a trip (last owner can't be removed) | Implemented |
+| 18 | Change a participant's role | Not implemented (API only: `PATCH /api/trips/:tripId/participants/:userId`, no UI) |
+| 19 | List trips I participate in | Not implemented (API only: `GET /api/trips/user/participating-trips`, no UI) |
+| 20 | Editors edit or add expenses on someone else's trip (role permissions) | Not implemented (permissions are stored but not checked) |
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -136,7 +220,7 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 | Axios | HTTP client with interceptors | 1.x |
 | Recharts | Data visualization | 2.x |
 | Tailwind CSS | Utility-first styling | 3.x |
-| Vitest | Testing framework | 2.x |
+| Jest | Testing framework | 30.x |
 | React Testing Library | Component testing | 16.x |
 
 ### Backend
@@ -160,7 +244,7 @@ The Travel Expense Tracker follows a **three-tier architecture** pattern:
 | Technology | Purpose |
 |------------|---------|
 | Render | Frontend & backend hosting |
-| PostgreSQL (Render) | Database hosting |
+| PostgreSQL (Neon) | Database hosting |
 | Git + GitHub | Version control |
 
 ---
@@ -190,24 +274,57 @@ cd backend
 npm install
 ```
 
-Create `.env` file in the backend directory:
+Create a `.env` file in the backend directory (see `.env.example`, never commit it):
 
 ```env
 PORT=4000
 DATABASE_URL=postgresql://username:password@localhost:5432/travel_expense_tracker
+DATABASE_SSL=false
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 NODE_ENV=development
 ```
 
-Set up the database:
+`DATABASE_SSL` defaults to on, which Neon needs. Set it to `false` for a plain local Postgres.
+
+Set up the database (from the `backend` directory). `db/schema.sql` drops and recreates all tables, so only run it on an empty database:
 
 ```bash
 # Create database
 createdb travel_expense_tracker
 
-# Run schema (if you have a schema file)
-psql -d travel_expense_tracker -f schema.sql
+# Run schema (also creates the btree_gist extension)
+psql -d travel_expense_tracker -f db/schema.sql
 ```
+
+No local `psql`? With Docker (any Postgres 14+ works, port 5434 so it doesn't clash with a local install):
+
+```bash
+docker run -d --name travel-db -e POSTGRES_USER=travel -e POSTGRES_PASSWORD=travel -e POSTGRES_DB=travel_expense_tracker -p 5434:5432 postgres:16
+docker exec -i travel-db psql -U travel -d travel_expense_tracker < db/schema.sql
+```
+
+The `DATABASE_URL` for that container is `postgresql://travel:travel@localhost:5434/travel_expense_tracker`.
+
+Optional: fill the local database with generated data (see [Data Volume](#data-volume-and-generation)):
+
+```bash
+npm run seed                 # uses DATABASE_URL from .env
+npm run seed -- .env.test    # or pass another env file
+```
+
+The seed script refuses to run unless `DATABASE_URL` points to `localhost`.
+
+#### Upgrading an existing database
+
+`db/migrations/` brings a database that is on the old schema up to the current `schema.sql` without losing data. Run the files in this order:
+
+```bash
+psql "$DATABASE_URL" -f db/migrations/002_check.sql                          # must return 0 rows, fix any rows it lists first
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/002_hand_in.sql     # one transaction, safe to run again
+psql "$DATABASE_URL" -f db/migrations/002_check.sql                          # still 0 rows
+```
+
+`002_rollback.sql` undoes it (it keeps `expenses.end_date`, which the app needs).
 
 #### 3. Set up Frontend
 
@@ -253,21 +370,40 @@ Navigate to **http://localhost:5173** and start using the application!
 
 ### Backend Tests
 
+The backend tests run against a real local PostgreSQL database, never Neon. Create `backend/.env.test` from `.env.test.example`:
+
+```env
+DATABASE_URL=postgres://<user>:<password>@localhost:5432/travel_test
+DATABASE_SSL=false
+JWT_SECRET=<any-local-secret>
+```
+
+For example with Docker, from the `backend` directory (a second database next to the dev one is fine, the name must contain `test`):
+
 ```bash
-cd backend
+docker run -d --name travel-test-db -e POSTGRES_USER=tet -e POSTGRES_PASSWORD=tet -e POSTGRES_DB=travel_test -p 5433:5432 postgres:16
+docker exec -i travel-test-db psql -U tet -d travel_test < db/schema.sql
+```
+
+which gives `DATABASE_URL=postgres://tet:tet@localhost:5433/travel_test`. Then, still in `backend`:
+
+```bash
 npm test
 ```
 
+`tests/setupEnv.js` loads `.env.test` and stops the run if `DATABASE_URL` is not on `localhost` or does not contain `test`.
+
 **Test Coverage:**
-- 7 test suites
-- 24 tests
-- Controllers, routes, and middleware
+- 10 test suites
+- 46 tests
+- Controllers, routes, middleware, the create trip transaction, overlap and ownership rules
 
 ### Frontend Tests
 
 ```bash
 cd frontend
-npm test
+npm test        # watch mode
+npx jest        # single run
 ```
 
 **Test Coverage:**
@@ -275,12 +411,6 @@ npm test
 - 16 tests
 - Components, pages, and context
 
-### Run All Tests
-
-```bash
-# From project root (if configured)
-npm run test:all
-```
 
 ---
 
@@ -304,7 +434,9 @@ travel-expense-tracker/
 │   │   │   ├── authMiddleware.js
 │   │   │   ├── errorHandler.js
 │   │   │   └── validate.js
+│   │   ├── data/             # All SQL queries (users, trips, expenses, participants)
 │   │   ├── utils/            # Helper functions
+│   │   │   ├── dateValidation.js
 │   │   │   └── responseHelpers.js
 │   │   ├── config/           # Configuration
 │   │   │   └── constants.js
@@ -313,6 +445,10 @@ travel-expense-tracker/
 │   │   ├── db.js             # Database connection
 │   │   ├── app.js            # Express app setup
 │   │   └── server.js         # Entry point
+│   ├── db/
+│   │   ├── schema.sql        # Full schema for a new database
+│   │   ├── seed.js           # Local test data generator
+│   │   └── migrations/       # 002 upgrade, check and rollback
 │   ├── tests/                # Jest tests
 │   ├── package.json
 │   └── README.md
@@ -350,7 +486,7 @@ travel-expense-tracker/
 │   │   ├── App.jsx           # Main app component
 │   │   └── main.jsx          # Entry point
 │   ├── public/               # Static files
-│   ├── tests/                # Vitest tests
+│   ├── tests/                # Jest tests
 │   ├── package.json
 │   └── README.md
 │
@@ -379,14 +515,14 @@ travel-expense-tracker/
 ## 🔧 Code Quality & Testing
 
 ### Backend
-- **Testing:** Jest + Supertest (24 tests, 7 test suites)
+- **Testing:** Jest + Supertest (46 tests, 10 test suites)
 - **Validation:** express-validator for input validation
 - **Security:** Helmet, rate limiting, JWT authentication, bcrypt password hashing
 - **API Docs:** Swagger UI for interactive documentation
 - **Error Handling:** Centralized error handling middleware
 
 ### Frontend
-- **Testing:** Vitest + React Testing Library (16 tests, 8 test suites)
+- **Testing:** Jest + React Testing Library (16 tests, 8 test suites)
 - **State Management:** Context API for authentication
 - **Routing:** React Router v7 with protected routes
 - **HTTP Client:** Axios with interceptors for token management
@@ -403,23 +539,21 @@ travel-expense-tracker/
 ### Code Analysis Tools
 
 **Backend:**
-- **ESLint:** Enforces JavaScript best practices and catches common errors
-  - Run: `npm run lint` (from backend directory)
-- **Jest:** Testing framework with 24 tests across 7 test suites
+- **Jest:** Testing framework with 46 tests across 10 test suites
   - Run: `npm test`
   - Coverage: Controllers, routes, middleware, and business logic
 
 **Frontend:**
 - **ESLint:** Code quality checking for React components
   - Run: `npm run lint` (from frontend directory)
-- **Vitest:** Fast unit testing framework with 16 tests across 8 test suites
+- **Jest:** Unit testing framework with 16 tests across 8 test suites
   - Run: `npm test`
   - Coverage: Components, pages, context, and user interactions
 
 **Running All Analysis:**
 ```bash
 # Run all backend checks
-cd backend && npm test && npm run lint
+cd backend && npm test
 
 # Run all frontend checks
 cd frontend && npm test && npm run lint
@@ -432,7 +566,7 @@ cd frontend && npm test && npm run lint
 - **Authentication:** JWT-based with secure token storage
 - **Password Security:** bcrypt hashing with salt rounds
 - **Input Validation:** express-validator on all endpoints
-- **Rate Limiting:** Prevents brute force attacks (100 requests per 15 minutes)
+- **Rate Limiting:** Prevents brute force attacks (200 requests per 15 minutes per IP on `/api/users`, `/api/trips` and `/api/expenses`)
 - **Security Headers:** Helmet middleware for HTTP headers
 - **CORS:** Configured for allowed origins only
 - **SQL Injection Prevention:** Parameterized queries throughout
@@ -451,14 +585,26 @@ Currently contains: **16 users, 2 trips, 1 expense, 2 trip participants**
 *Current production database counts as of November 2025*
 
 ### Development Data
-- Test data manually created during development
-- Sample dataset includes multiple test users, trips, and expenses across various categories
-- Generated through API endpoints during development and testing
+`backend/db/seed.js` generates a larger dataset in a local database with `generate_series`:
+
+| Table | Rows |
+|-------|------|
+| users | 200 |
+| trips | 3,000 (15 per user) |
+| expenses | 60,000 (20 per trip) |
+| trip_participants | 3,750 (an owner for every trip, plus a viewer on every 4th trip) |
+
+- The output is deterministic. IDs come from `md5(...)::uuid` and every value is computed from the row number, so every run gives the same data
+- Trips of one user never overlap and every expense date is inside its trip
+- Categories are Hotel, Food, Transport, Activities and Other (12,000 each). Hotel expenses also get an `end_date`
+- All seed users have the password `password123` and emails like `seed-user-001@example.com`
+- Re-running deletes the old seed users first (cascade) and inserts everything again in one transaction
+- Run it with `npm run seed` from `backend`. It refuses to run unless `DATABASE_URL` points to `localhost`
 
 ### Test Data
-- 24 backend tests with programmatically generated fixture data
-- Tests use in-memory/test database instances
-- Each test suite creates isolated test data (users, trips, expenses, participants)
+- 45 backend tests with programmatically generated fixture data
+- Tests run against a local PostgreSQL test database configured in `backend/.env.test` (see [Testing](#testing))
+- Each test suite creates its own users and only deletes those users afterwards (cascade removes their trips, expenses and participants)
 
 ---
 
@@ -512,13 +658,14 @@ Start Command: npm start
 
 **Environment Variables:**
 - `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_SSL` - leave unset (SSL on) for Neon
 - `JWT_SECRET` - Secret key for JWT signing
 - `PORT` - Port number (default: 4000)
 - `NODE_ENV` - Environment (production)
 
-### Database (Render PostgreSQL)
+### Database (Neon PostgreSQL)
 
-Managed PostgreSQL instance with automatic backups.
+Serverless PostgreSQL on Neon. Schema changes are applied with the files in `backend/db/migrations/` (see [Upgrading an existing database](#upgrading-an-existing-database)).
 
 ---
 
@@ -538,6 +685,10 @@ We welcome contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 **Seifeldin**
 - GitHub: [@Seif162042](https://github.com/Seif162042)
 - Project Repository: [travel-expense-tracker](https://github.com/Seif162042/travel-expense-tracker)
+
+### Team contribution
+
+This is a solo project. I own all parts: database design, backend, frontend, tests, documentation and deployment.
 
 ---
 

@@ -2,6 +2,8 @@
 -- Travel Expense Tracker - Database Schema
 -- =========================================
 
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
 -- USERS TABLE
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
@@ -16,36 +18,43 @@ CREATE TABLE users (
 DROP TABLE IF EXISTS trips CASCADE;
 CREATE TABLE trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
     destination VARCHAR(255) NOT NULL,
     budget DECIMAL(10,2),
     start_date DATE,
     end_date DATE,
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT trips_dates_check CHECK (end_date >= start_date),
+    -- '[)' so a trip can start on the day another one ends, same as the api check
+    CONSTRAINT trips_no_overlap EXCLUDE USING gist (user_id WITH =, daterange(start_date, end_date, '[)') WITH &&)
 );
 
 -- EXPENSES TABLE
 DROP TABLE IF EXISTS expenses CASCADE;
 CREATE TABLE expenses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     category VARCHAR(100),
     date DATE DEFAULT CURRENT_DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    end_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT expenses_amount_check CHECK (amount > 0),
+    CONSTRAINT expenses_dates_check CHECK (end_date >= date)
 );
 
 -- =========================================
 -- INDEXES
 -- =========================================
-CREATE INDEX idx_user_email ON users(email);
 CREATE INDEX idx_trip_user ON trips(user_id);
-CREATE INDEX idx_expense_trip ON expenses(trip_id);
-CREATE INDEX idx_expense_user ON expenses(user_id);
+CREATE INDEX idx_trip_created ON trips(created_at DESC);
+CREATE INDEX idx_expense_user_created ON expenses(user_id, created_at DESC);
+CREATE INDEX idx_expense_user_trip_created ON expenses(user_id, trip_id, created_at DESC);
+CREATE INDEX idx_expense_trip_covering ON expenses(trip_id) INCLUDE (amount, category);
 
 -- =========================================
 -- TRIP PARTICIPANTS TABLE (Many-to-Many Relationship)
@@ -65,11 +74,12 @@ CREATE TABLE trip_participants (
     role VARCHAR(50) NOT NULL DEFAULT 'member',
     permissions JSONB,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (trip_id, user_id)
+    PRIMARY KEY (trip_id, user_id),
+    CONSTRAINT trip_participants_role_check CHECK (role IN ('owner', 'editor', 'viewer', 'member'))
 );
 
 -- =========================================
 -- ADDITIONAL INDEXES FOR TRIP PARTICIPANTS
 -- =========================================
-CREATE INDEX idx_trip_participants_trip ON trip_participants(trip_id);
 CREATE INDEX idx_trip_participants_user ON trip_participants(user_id);
+CREATE INDEX idx_trip_participants_permissions ON trip_participants USING GIN (permissions);

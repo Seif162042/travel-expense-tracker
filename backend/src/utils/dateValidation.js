@@ -5,7 +5,7 @@
  * Extracted to eliminate duplication between createExpense and updateExpense.
  * 
  */
-import { pool } from "../db.js";
+import { findUserTripDates } from "../data/trips.js";
 
 /**
  * Validates that expense dates are within trip dates
@@ -34,20 +34,15 @@ import { pool } from "../db.js";
 export async function validateExpenseDates({ expenseDate, expenseEndDate, tripId, userId }) {
     try {
         // Fetch trip dates from database
-        const tripQuery = await pool.query(
-            `SELECT start_date, end_date FROM trips WHERE id = $1 AND user_id = $2`,
-            [tripId, userId]
-        );
+        const trip = await findUserTripDates(tripId, userId);
 
         // Check if trip exists and belongs to user
-        if (!tripQuery.rows.length) {
+        if (!trip) {
             return {
                 isValid: false,
                 error: "Trip not found or does not belong to you"
             };
         }
-
-        const trip = tripQuery.rows[0];
 
         // Convert string dates to Date objects for comparison
         const expenseStart = new Date(expenseDate);

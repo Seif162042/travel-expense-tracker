@@ -39,7 +39,8 @@ Copy the `.env.example` file to `.env` and fill in your values:
 
     PORT=4000
     DATABASE_URL=postgres://user:password@localhost:5432/travel
-    JWT_SECRET=supersecret
+    DATABASE_SSL=false
+    JWT_SECRET=<your-jwt-secret>
 
 ### 3️⃣ Start the Server
 Start the development server:
@@ -52,6 +53,8 @@ http://localhost:4000
 ---
 
 ## Run Tests
+Tests need a local PostgreSQL test database in `.env.test` (copy `.env.test.example`, load `db/schema.sql` into it). They refuse to run against anything that is not `localhost` with `test` in the url.
+
 Execute all Jest + Supertest endpoint tests:
 
     npm test
@@ -61,8 +64,9 @@ Expected output:
     PASS  tests/users.test.js
     PASS  tests/trips.test.js
     PASS  tests/expenses.test.js
-    Test Suites: 7 passed, 7 total
-    Tests:       24 passed, 24 total
+    ...
+    Test Suites: 10 passed, 10 total
+    Tests:       46 passed, 46 total
 
 ---
 
@@ -97,16 +101,10 @@ You can explore and test all endpoints interactively.
 
 ## Code Analysis Tools
 
-**Linting:**
-- **ESLint:** Enforces JavaScript best practices and catches common errors
-  - Configuration: `.eslintrc.json` (or package.json)
-  - Run: `npm run lint`
-  - Checks: Code style, potential bugs, best practices
-
 **Testing:**
 - **Jest:** Unit and integration testing framework
   - Run: `npm test`
-  - Coverage: 7 test suites, 24 tests
+  - Coverage: 10 test suites, 46 tests
   - Tests: Controllers, routes, middleware, authentication, error handling
 
 **Security Analysis:**
@@ -118,12 +116,6 @@ You can explore and test all endpoints interactively.
 ```bash
 # Run tests
 npm test
-
-# Run linting
-npm run lint
-
-# Run both
-npm run lint && npm test
 ```
 
 ---
@@ -171,6 +163,7 @@ This backend can be deployed easily to:
 Required environment variables:
 
     DATABASE_URL
+    DATABASE_SSL   (leave unset for Neon, false for a local Postgres without SSL)
     JWT_SECRET
     PORT
 
@@ -197,14 +190,16 @@ The database consists of 4 main tables:
 
 **trips**
 - Primary key: `id` (UUID)
-- Foreign key: `user_id` → users(id)
+- Foreign key: `user_id` → users(id), NOT NULL
 - Stores: title, destination, budget, start_date, end_date, notes
+- Constraints: `end_date >= start_date`, no overlapping trips per user (`trips_no_overlap`, needs `btree_gist`)
 - Relationships: 1:many with expenses, many:many with users (via trip_participants)
 
 **expenses**
 - Primary key: `id` (UUID)
-- Foreign keys: `trip_id` → trips(id), `user_id` → users(id)
-- Stores: description, amount, category, date
+- Foreign keys: `trip_id` → trips(id), `user_id` → users(id), both NOT NULL
+- Stores: description, amount, category, date, end_date
+- Constraints: `amount > 0`, `end_date >= date`
 - Relationships: Many:1 with trips, many:1 with users
 
 **trip_participants** (Junction Table)
@@ -216,12 +211,17 @@ The database consists of 4 main tables:
 
 ### Indexes
 
-Performance indexes are created on:
-- `users.email` - For login queries
-- `trips.user_id` - For fetching user's trips
-- `expenses.trip_id` - For fetching trip expenses
-- `expenses.user_id` - For fetching user's expenses
-- `trip_participants.trip_id` - For participant queries
-- `trip_participants.user_id` - For user's shared trips
+Indexes in `db/schema.sql`:
+- `users_email_key` (unique on `email`) - login and duplicate checks
+- `idx_trip_user (user_id)` - a user's trips
+- `idx_trip_created (created_at DESC)` - the feed
+- `idx_expense_user_created (user_id, created_at DESC)` - a user's latest expenses
+- `idx_expense_user_trip_created (user_id, trip_id, created_at DESC)` - a user's expenses for one trip
+- `idx_expense_trip_covering (trip_id) INCLUDE (amount, category)` - per trip totals and cascade deletes
+- primary key `(trip_id, user_id)` on trip_participants - participants of a trip
+- `idx_trip_participants_user (user_id)` - trips a user takes part in
+- `idx_trip_participants_permissions` (GIN on `permissions`) - permission lookups
+
+Existing databases are upgraded with `db/migrations/002_check.sql`, then `002_hand_in.sql` (`002_rollback.sql` undoes it).
 
 See [schema.sql](./db/schema.sql) for complete schema definition.

@@ -10,7 +10,9 @@
  * - Update participant role/permissions
  */
 
-import { pool } from "../db.js";
+import * as participants from "../data/participants.js";
+import { findTripOwnerId } from "../data/trips.js";
+import { findUserIdByEmail } from "../data/users.js";
 import { HTTP_STATUS } from "../config/constants.js";
 import { successResponse, errorResponse } from "../utils/responseHelpers.js";
 
@@ -38,35 +40,25 @@ export const addParticipant = async (req, res) => {
     }
 
     // Check if current user is trip owner
-    const ownerCheck = await pool.query(
-      `SELECT tp.role FROM trip_participants tp 
-       WHERE tp.trip_id = $1 AND tp.user_id = $2`,
-      [tripId, currentUserId]
-    );
+    const ownerCheck = await participants.findParticipantRole(tripId, currentUserId);
 
-    if (ownerCheck.rows.length === 0 || ownerCheck.rows[0].role !== 'owner') {
+    if (!ownerCheck || ownerCheck.role !== 'owner') {
       return errorResponse(res, HTTP_STATUS.FORBIDDEN, "Only trip owner can add participants");
     }
 
     // Find user by email
-    const userResult = await pool.query(
-      `SELECT id FROM users WHERE email = $1`,
-      [user_email]
-    );
+    const newUser = await findUserIdByEmail(user_email);
 
-    if (userResult.rows.length === 0) {
+    if (!newUser) {
       return errorResponse(res, HTTP_STATUS.NOT_FOUND, "User not found");
     }
 
-    const newUserId = userResult.rows[0].id;
+    const newUserId = newUser.id;
 
     // Check if already participant
-    const existingCheck = await pool.query(
-      `SELECT * FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
-      [tripId, newUserId]
-    );
+    const existing = await participants.findParticipant(tripId, newUserId);
 
-    if (existingCheck.rows.length > 0) {
+    if (existing) {
       return errorResponse(res, HTTP_STATUS.BAD_REQUEST, "User is already a participant");
     }
 
@@ -74,14 +66,9 @@ export const addParticipant = async (req, res) => {
     const permissions = getDefaultPermissions(role);
 
     // Add participant
-    const result = await pool.query(
-      `INSERT INTO trip_participants (trip_id, user_id, role, permissions)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [tripId, newUserId, role, JSON.stringify(permissions)]
-    );
+    const added = await participants.addParticipant(tripId, newUserId, role, permissions);
 
-    return successResponse(res, HTTP_STATUS.CREATED, result.rows[0]);
+    return successResponse(res, HTTP_STATUS.CREATED, added);
   } catch (err) {
     console.error("Error adding participant:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to add participant");
@@ -104,41 +91,27 @@ export const getParticipants = async (req, res) => {
     }
 
     // Check if user is trip owner OR participant
-    const tripOwnerCheck = await pool.query(
-      `SELECT user_id FROM trips WHERE id = $1`,
-      [tripId]
-    );
+    const tripOwnerId = await findTripOwnerId(tripId);
 
-    if (tripOwnerCheck.rows.length === 0) {
+    if (!tripOwnerId) {
       return errorResponse(res, HTTP_STATUS.NOT_FOUND, "Trip not found");
     }
 
-    const tripOwnerId = tripOwnerCheck.rows[0].user_id;
     const isOwner = tripOwnerId === currentUserId;
 
     // If not owner, check if participant
     if (!isOwner) {
-      const accessCheck = await pool.query(
-        `SELECT * FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
-        [tripId, currentUserId]
-      );
+      const access = await participants.findParticipant(tripId, currentUserId);
 
-      if (accessCheck.rows.length === 0) {
+      if (!access) {
         return errorResponse(res, HTTP_STATUS.FORBIDDEN, "You are not a participant of this trip");
       }
     }
 
     // Get all participants with user info
-    const result = await pool.query(
-      `SELECT tp.*, u.name, u.email
-       FROM trip_participants tp
-       JOIN users u ON u.id = tp.user_id
-       WHERE tp.trip_id = $1
-       ORDER BY tp.joined_at`,
-      [tripId]
-    );
+    const list = await participants.findTripParticipants(tripId);
 
-    return successResponse(res, HTTP_STATUS.OK, result.rows);
+    return successResponse(res, HTTP_STATUS.OK, list);
   } catch (err) {
     console.error("Error fetching participants:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch participants");
@@ -154,17 +127,9 @@ export const getParticipatingTrips = async (req, res) => {
     }
 
     // Get all trips where user is participant
-    const result = await pool.query(
-      `SELECT t.*, tp.role, tp.joined_at
-       FROM trips t
-       JOIN trip_participants tp ON tp.trip_id = t.id
-       WHERE tp.user_id = $1
-       ORDER BY t.start_date DESC
-       LIMIT 50`,
-      [userId]
-    );
+    const trips = await participants.findParticipatingTrips(userId);
 
-    return successResponse(res, HTTP_STATUS.OK, result.rows);
+    return successResponse(res, HTTP_STATUS.OK, trips);
   } catch (err) {
     console.error("Error fetching participating trips:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to fetch trips");
@@ -187,16 +152,13 @@ export const removeParticipant = async (req, res) => {
     }
 
     // Check current user's role
-    const roleCheck = await pool.query(
-      `SELECT role FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
-      [tripId, currentUserId]
-    );
+    const roleCheck = await participants.findParticipantRole(tripId, currentUserId);
 
-    if (roleCheck.rows.length === 0) {
+    if (!roleCheck) {
       return errorResponse(res, HTTP_STATUS.FORBIDDEN, "You are not a participant of this trip");
     }
 
-    const isOwner = roleCheck.rows[0].role === 'owner';
+    const isOwner = roleCheck.role === 'owner';
     const isSelf = currentUserId === userId;
 
     // Can remove if: owner removing someone, or user removing themselves
@@ -206,23 +168,17 @@ export const removeParticipant = async (req, res) => {
 
     // Prevent removing last owner
     if (isOwner && isSelf) {
-      const ownerCount = await pool.query(
-        `SELECT COUNT(*) FROM trip_participants WHERE trip_id = $1 AND role = 'owner'`,
-        [tripId]
-      );
+      const ownerCount = await participants.countOwners(tripId);
 
-      if (parseInt(ownerCount.rows[0].count) <= 1) {
+      if (ownerCount <= 1) {
         return errorResponse(res, HTTP_STATUS.BAD_REQUEST, "Cannot remove last owner");
       }
     }
 
     // Remove participant
-    const result = await pool.query(
-      `DELETE FROM trip_participants WHERE trip_id = $1 AND user_id = $2 RETURNING *`,
-      [tripId, userId]
-    );
+    const removed = await participants.removeParticipant(tripId, userId);
 
-    if (result.rows.length === 0) {
+    if (!removed) {
       return errorResponse(res, HTTP_STATUS.NOT_FOUND, "Participant not found");
     }
 
@@ -251,12 +207,9 @@ export const updateParticipant = async (req, res) => {
     }
 
     // Check if current user is owner
-    const ownerCheck = await pool.query(
-      `SELECT role FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
-      [tripId, currentUserId]
-    );
+    const ownerCheck = await participants.findParticipantRole(tripId, currentUserId);
 
-    if (ownerCheck.rows.length === 0 || ownerCheck.rows[0].role !== 'owner') {
+    if (!ownerCheck || ownerCheck.role !== 'owner') {
       return errorResponse(res, HTTP_STATUS.FORBIDDEN, "Only owner can update participants");
     }
 
@@ -268,40 +221,17 @@ export const updateParticipant = async (req, res) => {
       }
     }
 
-    // Build update query dynamically
-    const updates = [];
-    const values = [];
-    let paramCount = 1;
-
-    if (role) {
-      updates.push(`role = $${paramCount++}`);
-      values.push(role);
-    }
-
-    if (permissions) {
-      updates.push(`permissions = $${paramCount++}`);
-      values.push(JSON.stringify(permissions));
-    }
-
-    if (updates.length === 0) {
+    if (!role && !permissions) {
       return errorResponse(res, HTTP_STATUS.BAD_REQUEST, "No updates provided");
     }
 
-    values.push(tripId, userId);
+    const updated = await participants.updateParticipant(tripId, userId, { role, permissions });
 
-    const result = await pool.query(
-      `UPDATE trip_participants 
-       SET ${updates.join(', ')}
-       WHERE trip_id = $${paramCount++} AND user_id = $${paramCount++}
-       RETURNING *`,
-      values
-    );
-
-    if (result.rows.length === 0) {
+    if (!updated) {
       return errorResponse(res, HTTP_STATUS.NOT_FOUND, "Participant not found");
     }
 
-    return successResponse(res, HTTP_STATUS.OK, result.rows[0]);
+    return successResponse(res, HTTP_STATUS.OK, updated);
   } catch (err) {
     console.error("Error updating participant:", err);
     return errorResponse(res, HTTP_STATUS.SERVER_ERROR, "Failed to update participant");
@@ -366,17 +296,13 @@ function getDefaultPermissions(role) {
  */
 export const checkTripPermission = async (userId, tripId, action) => {
   try {
-    const result = await pool.query(
-      `SELECT role, permissions FROM trip_participants 
-       WHERE trip_id = $1 AND user_id = $2`,
-      [tripId, userId]
-    );
+    const participant = await participants.findParticipantPermissions(tripId, userId);
 
-    if (result.rows.length === 0) {
+    if (!participant) {
       return false;
     }
 
-    const { role, permissions } = result.rows[0];
+    const { role, permissions } = participant;
 
     // Owner can do everything
     if (role === 'owner') {

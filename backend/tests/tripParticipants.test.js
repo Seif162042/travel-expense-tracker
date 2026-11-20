@@ -30,12 +30,11 @@ describe("Trip Participants API (Simplified)", () => {
   let memberId;
   let tripId;
 
+  const testEmails = ["owner-simple-test@example.com", "member-simple-test@example.com"];
+
   beforeAll(async () => {
     // Clean DB to avoid duplicate-user errors
-    await pool.query("DELETE FROM trip_participants");
-    await pool.query("DELETE FROM expenses");
-    await pool.query("DELETE FROM trips");
-    await pool.query("DELETE FROM users WHERE email LIKE '%simple-test%'");
+    await pool.query("DELETE FROM users WHERE email = ANY($1)", [testEmails]);
 
     // Register owner
     const ownerRes = await request(app)
@@ -81,10 +80,7 @@ describe("Trip Participants API (Simplified)", () => {
   });
 
   afterAll(async () => {
-    await pool.query("DELETE FROM trip_participants");
-    await pool.query("DELETE FROM expenses");
-    await pool.query("DELETE FROM trips");
-    await pool.query("DELETE FROM users WHERE email LIKE '%simple-test%'");
+    await pool.query("DELETE FROM users WHERE email = ANY($1)", [testEmails]);
     await pool.end();
   });
 
@@ -112,6 +108,15 @@ describe("Trip Participants API (Simplified)", () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.length).toBeGreaterThan(0);
+  });
+
+  it("should not let the last owner remove themselves", async () => {
+    const res = await request(app)
+      .delete(`/api/trips/${tripId}/participants/${ownerId}`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .expect(400);
+
+    expect(res.body.message).toBe("Cannot remove last owner");
   });
 
   it("should allow the owner to remove a participant", async () => {

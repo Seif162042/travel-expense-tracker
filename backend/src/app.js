@@ -41,7 +41,7 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "tiny" : "dev"));
 
 /* ---------- Landing + health ---------- */
 
-// Redirect root to Swagger (nice DX)
+// Redirect root to Swagger 
 app.get("/", (_req, res) => res.redirect("/docs"));
 
 // Top-level health for Render checks
@@ -53,7 +53,7 @@ app.get("/health", (_req, res) => {
     });
 });
 
-// Namespaced health (keep if already referenced)
+// Namespaced health 
 app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", time: new Date().toISOString() });
 });
@@ -62,7 +62,7 @@ app.get("/api/health", (_req, res) => {
 
 const writeLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
-    max: 200,                 // tune as you like
+    max: 200,                 // tune as I like
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -82,12 +82,12 @@ app.use('/api/trips', tripParticipantsRoutes);
 
 /* ---------- 404 + Error handling ---------- */
 
-// 404 fallback (after all routes)
+// 404 fallback 
 app.use((req, res) => {
     return res.status(404).json({ error: "Not found" });
 });
 
-// Centralized error handler (keep yours last)
+// Centralized error handler
 app.use(errorHandler);
 
 export default app;

@@ -19,6 +19,7 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { apiErrorMessage } from "../api/apiError";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -35,7 +36,7 @@ export default function Login() {
             navigate("/feed");
         } catch (err) {
             console.error(err);
-            setError("Invalid email or password");
+            setError(apiErrorMessage(err, "Invalid email or password"));
         }
     };
 

@@ -19,6 +19,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { apiErrorMessage } from "../api/apiError";
 
 export default function Register() {
     const [name, setName] = useState("");
@@ -35,7 +36,7 @@ export default function Register() {
             navigate("/login");
         } catch (err) {
             console.error(err);
-            setError("Registration failed. Please try again.");
+            setError(apiErrorMessage(err, "Registration failed. Please try again."));
         }
     };
 

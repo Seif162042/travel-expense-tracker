@@ -34,6 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_trip_created ON trips(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_expense_user_created ON expenses(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_expense_user_trip_created ON expenses(user_id, trip_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_expense_trip_covering ON expenses(trip_id) INCLUDE (amount, category);
+ALTER TABLE trip_participants ALTER COLUMN permissions TYPE jsonb USING permissions::jsonb;
 CREATE INDEX IF NOT EXISTS idx_trip_participants_permissions ON trip_participants USING GIN (permissions);
 
 COMMIT;

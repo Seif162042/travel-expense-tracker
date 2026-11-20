@@ -39,7 +39,8 @@ Copy the `.env.example` file to `.env` and fill in your values:
 
     PORT=4000
     DATABASE_URL=postgres://user:password@localhost:5432/travel
-    JWT_SECRET=supersecret
+    DATABASE_SSL=false
+    JWT_SECRET=<your-jwt-secret>
 
 ### 3️⃣ Start the Server
 Start the development server:

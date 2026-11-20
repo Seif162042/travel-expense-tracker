@@ -17,6 +17,7 @@ DROP INDEX IF EXISTS idx_expense_user_created;
 DROP INDEX IF EXISTS idx_expense_user_trip_created;
 DROP INDEX IF EXISTS idx_expense_trip_covering;
 DROP INDEX IF EXISTS idx_trip_participants_permissions;
+ALTER TABLE trip_participants ALTER COLUMN permissions TYPE json USING permissions::json;
 
 CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_trip_participants_trip ON trip_participants(trip_id);

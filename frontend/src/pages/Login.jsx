@@ -40,49 +40,17 @@ export default function Login() {
     };
 
     return (
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-                backgroundColor: "var(--bg)",
-            }}
-        >
-            <div
-                className="card"
-                style={{
-                    width: "100%",
-                    maxWidth: "400px",
-                    padding: "2rem",
-                    textAlign: "center",
-                }}
-            >
-                <h2 style={{ marginBottom: "1.5rem" }}>Login to Your Account</h2>
+        <div className="auth-page">
+            <div className="card auth-card">
+                <h2>Login to Your Account</h2>
 
-                <form
-                    onSubmit={handleSubmit}
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                    }}
-                >
+                <form onSubmit={handleSubmit}>
                     <input
                         type="email"
                         placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        style={{
-                            fontWeight: "600",
-                            width: "100%",
-                            padding: "10px",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                            fontSize: "1rem",
-                            boxSizing: "border-box",
-                        }}
                     />
                     <input
                         type="password"
@@ -90,39 +58,15 @@ export default function Login() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        style={{
-                            fontWeight: "600",
-                            width: "100%",
-                            padding: "10px",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                            fontSize: "1rem",
-                            boxSizing: "border-box",
-                        }}
                     />
-                    <button
-                        type="submit"
-                        style={{
-                            padding: "10px",
-                            fontWeight: "600",
-                        }}
-                    >
-                        Login
-                    </button>
+                    <button type="submit">Login</button>
                 </form>
 
-                {error && (
-                    <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
-                )}
+                {error && <p className="error" style={{ marginTop: "12px" }}>{error}</p>}
 
-                <p style={{ marginTop: "1rem" }}>
+                <p className="auth-alt">
                     Don’t have an account?{" "}
-                    <Link
-                        to="/register"
-                        style={{ color: "var(--primary)", fontWeight: "500" }}
-                    >
-                        Register here
-                    </Link>
+                    <Link to="/register">Register here</Link>
                 </p>
             </div>
         </div>

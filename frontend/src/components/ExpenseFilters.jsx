@@ -53,14 +53,12 @@ export default function ExpenseFilters({ expenses, onChange }) {
         onChange(list);
     }, [expenses, filter, sort, onChange]);
 
-    const controlStyle = { padding: "8px", border: "1px solid #ccc", borderRadius: 6 };
-
     return (
-        <div style={{ display: "flex", gap: 12, margin: "12px 0" }}>
-            <select style={controlStyle} value={filter} onChange={e => setFilter(e.target.value)}>
+        <div className="filters">
+            <select value={filter} onChange={e => setFilter(e.target.value)}>
                 {categories.map(c => <option key={c} value={c}>{c === "all" ? "All categories" : c}</option>)}
             </select>
-            <select style={controlStyle} value={sort} onChange={e => setSort(e.target.value)}>
+            <select value={sort} onChange={e => setSort(e.target.value)}>
                 <option value="date">Sort by date</option>
                 <option value="amount">Sort by amount</option>
             </select>

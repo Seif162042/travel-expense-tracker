@@ -70,51 +70,25 @@ export default function Dashboard() {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "1rem" }}>
+    <div className="container">
       <Navbar />
       <DashboardOverview trips={trips} expensesData={expensesData} />
       <TripList trips={trips} expensesData={expensesData} loadTrips={loadTrips} />
       <TripForm loadTrips={loadTrips} />
-      {/* ===== Collapsible Analytics Overview ===== */}
-      <div
-        style={{
-          marginTop: "1.5rem",
-          background: "#f8f9fa",
-          borderRadius: "10px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          padding: "0",
-        }}
-      >
+      <div className="section">
         <button
+          className="btn-soft btn-block"
           onClick={() => setShowAnalytics(!showAnalytics)}
-          style={{
-            background: "var(--primary)",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "600",
-            width: "100%",
-            textAlign: "center",
-            padding: "10px 0",
-          }}
         >
           {showAnalytics ? "Hide Analytics Overview ↑" : "Show Analytics Overview ↓"}
         </button>
 
         {showAnalytics && (
-          <div
-            style={{
-              marginTop: "1rem",
-              transition: "max-height 0.4s ease",
-              overflow: "hidden",
-            }}
-          >
+          <div className="section">
             <DashboardCharts trips={trips} expensesData={expensesData} />
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -24,42 +24,26 @@ export default function DashboardOverview({ trips, expensesData }) {
   const avgPerTrip = tripsCount > 0 ? totalSpent / tripsCount : 0;
 
   return (
-    <section style={{ marginTop: "1.5rem" }}>
+    <section>
       <h2>Dashboard Overview</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
-          marginTop: "1rem",
-        }}
-      >
-        <div style={cardStyle}>
-          <h3>Total Trips</h3>
-          <p>{tripsCount}</p>
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <p className="stat-label">Total Trips</p>
+          <p className="stat-value">{tripsCount}</p>
         </div>
-        <div style={cardStyle}>
-          <h3>Total Spent</h3>
-          <p>${totalSpent.toFixed(2)}</p>
+        <div className="card stat-card">
+          <p className="stat-label">Total Spent</p>
+          <p className="stat-value">${totalSpent.toFixed(2)}</p>
         </div>
-        <div style={cardStyle}>
-          <h3>Average Spent per Trip</h3>
-          <p>${avgPerTrip.toFixed(2)}</p>
+        <div className="card stat-card">
+          <p className="stat-label">Average Spent per Trip</p>
+          <p className="stat-value">${avgPerTrip.toFixed(2)}</p>
         </div>
-        <div style={cardStyle}>
-          <h3>Total Budget</h3>
-          <p>${totalBudget.toFixed(2)}</p>
+        <div className="card stat-card">
+          <p className="stat-label">Total Budget</p>
+          <p className="stat-value">${totalBudget.toFixed(2)}</p>
         </div>
       </div>
     </section>
   );
 }
-
-const cardStyle = {
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  padding: "16px",
-  backgroundColor: "#fafafa",
-  textAlign: "center",
-  boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-};

@@ -74,10 +74,10 @@ export default function TripDetails() {
     const totalSpent = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return (
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div className="container">
             <Navbar />
             <Link to="/dashboard">← Back to trips</Link>
-            {err && <p style={{ color: "red" }}>{err}</p>}
+            {err && <p className="error">{err}</p>}
 
             {trip ? (
                 <>
@@ -89,12 +89,12 @@ export default function TripDetails() {
                     {trip.notes && <p>Notes: {trip.notes}</p>}
 
                     {/* Participants Section */}
-                    <div style={{ marginTop: 30, marginBottom: 30 }}>
+                    <div className="section">
                         <AddParticipantForm
                             tripId={id}
                             onSuccess={handleParticipantsChange}
                         />
-                        <div style={{ marginTop: 20 }}>
+                        <div className="section">
                             <ParticipantsList
                                 key={participantsKey}
                                 tripId={id}
@@ -109,7 +109,7 @@ export default function TripDetails() {
                     {expenses.length > 0 && (
                         <>
                             <ExpenseChart expenses={expenses} />
-                            <h3 style={{ marginTop: 20 }}>
+                            <h3 className="section">
                                 Total Spent: ${totalSpent.toFixed(2)} | Budget Left: $
                                 {(trip.budget - totalSpent).toFixed(2)}
                             </h3>

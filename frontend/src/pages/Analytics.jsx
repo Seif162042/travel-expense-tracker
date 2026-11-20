@@ -78,7 +78,7 @@ export default function Analytics() {
   }, []);
 
   if (loading) return <p>Loading analytics...</p>;
-  if (err) return <p style={{ color: "red" }}>{err}</p>;
+  if (err) return <p className="error">{err}</p>;
 
   // ====== Apply Filters ======
   const filteredExpenses = expenses.filter((e) => {
@@ -129,40 +129,22 @@ export default function Analytics() {
   );
 
   // ====== Chart Colors ======
-  const colors = [
-    "#6A4C93",
-    "#FF6B6B",
-    "#4ECDC4",
-    "#FFD93D",
-    "#1A535C",
-    "#FF9F1C",
-    "#00A8E8",
-    "#C77DFF",
-  ];
+  const colors = ["#4f46e5", "#06b6d4", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
 
   // ====== UI ======
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "1rem" }}>
+    <div className="container">
       <Navbar />
-      <h2 style={{ marginBottom: "1rem" }}>Global Analytics</h2>
+      <h2>Global Analytics</h2>
 
       {/* === Filters === */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "10px",
-          alignItems: "center",
-          marginBottom: "1rem",
-        }}
-      >
+      <div className="filters">
         {/* Trip Selector */}
         <div>
-          <label style={{ fontWeight: 500, marginRight: "6px" }}>Trip:</label>
+          <label>Trip:</label>
           <select
             value={selectedTrip}
             onChange={(e) => setSelectedTrip(e.target.value)}
-            style={selectStyle}
           >
             <option value="">All Trips</option>
             {trips.map((t) => (
@@ -175,45 +157,36 @@ export default function Analytics() {
 
         {/* Date Range */}
         <div>
-          <label style={{ fontWeight: 500, marginRight: "6px" }}>From:</label>
+          <label>From:</label>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            style={selectStyle}
           />
         </div>
         <div>
-          <label style={{ fontWeight: 500, marginRight: "6px" }}>To:</label>
+          <label>To:</label>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            style={selectStyle}
           />
         </div>
       </div>
 
       {/* === Summary Cards === */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
-          marginBottom: "2rem",
-        }}
-      >
-        <div style={cardStyle}>
-          <h3>Total Trips</h3>
-          <p>{totalTrips}</p>
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <p className="stat-label">Total Trips</p>
+          <p className="stat-value">{totalTrips}</p>
         </div>
-        <div style={cardStyle}>
-          <h3>Total Spent</h3>
-          <p>${totalSpent.toFixed(2)}</p>
+        <div className="card stat-card">
+          <p className="stat-label">Total Spent</p>
+          <p className="stat-value">${totalSpent.toFixed(2)}</p>
         </div>
-        <div style={cardStyle}>
-          <h3>Average per Trip</h3>
-          <p>${avgBudget.toFixed(2)}</p>
+        <div className="card stat-card">
+          <p className="stat-label">Average per Trip</p>
+          <p className="stat-value">${avgBudget.toFixed(2)}</p>
         </div>
       </div>
 
@@ -229,12 +202,12 @@ export default function Analytics() {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="budget" fill="#6A4C93" name="Budget" />
+          <Bar dataKey="budget" fill="#4f46e5" name="Budget" />
         </BarChart>
       </ResponsiveContainer>
 
       {/* === Line Chart: Spending Trend === */}
-      <h3 style={{ marginTop: "2rem" }}>Spending Trend Over Time</h3>
+      <h3 className="section">Spending Trend Over Time</h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={trendData}
@@ -248,14 +221,14 @@ export default function Analytics() {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#FF6B6B"
+            stroke="#4f46e5"
             strokeWidth={2}
           />
         </LineChart>
       </ResponsiveContainer>
 
       {/* === Pie Chart: Category Breakdown === */}
-      <h3 style={{ marginTop: "2rem" }}>Spending by Category</h3>
+      <h3 className="section">Spending by Category</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -282,22 +255,4 @@ export default function Analytics() {
       </ResponsiveContainer>
     </div>
   );
-}
-
-const cardStyle = {
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  padding: "16px",
-  backgroundColor: "#fafafa",
-  textAlign: "center",
-  boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-};
-
-const selectStyle = {
-  width: "100%",
-  padding: "10px",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-  fontSize: "1rem",
-  boxSizing: "border-box",
 }

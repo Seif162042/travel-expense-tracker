@@ -46,37 +46,21 @@ export default function Feed() {
 
 
     if (loading) return <p>Loading feed...</p>;
-    if (error) return <p style={{ color: "red" }}>{error}</p>;
+    if (error) return <p className="error">{error}</p>;
 
     return (
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
+        <div className="container">
             <Navbar />
             <h2>Explore Other Trips</h2>
 
             {trips.length === 0 ? (
                 <p>No public trips yet.</p>
             ) : (
-                <div
-                    style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "16px",
-                        marginTop: "1rem",
-                    }}
-                >
+                <div className="feed-grid">
                     {trips.map((trip) => (
-                        <div
-                            key={trip.id}
-                            style={{
-                                border: "1px solid #ddd",
-                                borderRadius: "8px",
-                                padding: "1rem",
-                                width: "260px",
-                                backgroundColor: "#fafafa",
-                            }}
-                        >
+                        <div key={trip.id} className="card">
                             <h3>{trip.destination}</h3>
-                            <p style={{ fontSize: "0.9rem", opacity: 0.8 }}>
+                            <p className="trip-meta">
                                 {trip.start_date?.slice(0, 10)} → {trip.end_date?.slice(0, 10)}
                             </p>
                             <p>

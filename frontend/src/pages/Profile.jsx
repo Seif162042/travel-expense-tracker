@@ -40,21 +40,14 @@ export default function Profile() {
     }, []);
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p style={{ color: "red" }}>{error}</p>;
+    if (error) return <p className="error">{error}</p>;
 
     return (
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "1rem" }}>
+        <div className="container">
             <Navbar />
             <h2>User Profile</h2>
             {profile ? (
-                <div
-                    style={{
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        padding: "16px",
-                        backgroundColor: "#fafafa",
-                    }}
-                >
+                <div className="card">
                     <p>
                         <strong>Name:</strong> {profile.name}
                     </p>

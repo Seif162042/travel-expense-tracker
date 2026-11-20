@@ -56,45 +56,34 @@ export default function AddParticipantForm({ tripId, onSuccess }) {
 
   if (!showForm) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <span className="text-xl">+</span>
-          <span>Add Participant</span>
+      <div className="card">
+        <button className="btn-block" onClick={() => setShowForm(true)}>
+          + Add Participant
         </button>
       </div>
     );
   }
 
+  const closeForm = () => {
+    setShowForm(false);
+    setError('');
+    setFormData({ email: '', role: 'member' });
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">Add Participant</h3>
-        <button
-          onClick={() => {
-            setShowForm(false);
-            setError('');
-            setFormData({ email: '', role: 'member' });
-          }}
-          className="text-gray-500 hover:text-gray-700"
-        >
+    <div className="card">
+      <div className="row-between">
+        <h3>Add Participant</h3>
+        <button type="button" className="btn-ghost" onClick={closeForm}>
           ✕
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="stack">
+        {error && <div className="error">{error}</div>}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            User Email
-          </label>
+          <label htmlFor="email">User Email</label>
           <input
             type="email"
             id="email"
@@ -102,25 +91,19 @@ export default function AddParticipantForm({ tripId, onSuccess }) {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter user's email address"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
             disabled={loading}
           />
-          <p className="mt-1 text-xs text-gray-500">
-            The user must already have an account with this email
-          </p>
+          <p className="hint">The user must already have an account with this email</p>
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-            Role
-          </label>
+          <label htmlFor="role">Role</label>
           <select
             id="role"
             name="role"
             value={formData.role}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={loading}
           >
             <option value="member">Member - Can add expenses</option>
@@ -130,38 +113,21 @@ export default function AddParticipantForm({ tripId, onSuccess }) {
           </select>
         </div>
 
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Role Explanation:</strong>
-          </p>
-          <ul className="text-xs text-blue-700 mt-2 space-y-1">
-            <li>• <strong>Member:</strong> Can add their own expenses to the trip</li>
-            <li>• <strong>Editor:</strong> Can edit trip details and all expenses</li>
-            <li>• <strong>Viewer:</strong> Can view trip and expenses but cannot make changes</li>
-            <li>• <strong>Owner:</strong> Full control including deleting trip and managing participants</li>
+        <div className="note">
+          <strong>Role Explanation:</strong>
+          <ul>
+            <li><strong>Member:</strong> Can add their own expenses to the trip</li>
+            <li><strong>Editor:</strong> Can edit trip details and all expenses</li>
+            <li><strong>Viewer:</strong> Can view trip and expenses but cannot make changes</li>
+            <li><strong>Owner:</strong> Full control including deleting trip and managing participants</li>
           </ul>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className={`flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
+        <div className="actions">
+          <button type="submit" disabled={loading}>
             {loading ? 'Adding...' : 'Add Participant'}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowForm(false);
-              setError('');
-              setFormData({ email: '', role: 'member' });
-            }}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            disabled={loading}
-          >
+          <button type="button" className="btn-ghost" onClick={closeForm} disabled={loading}>
             Cancel
           </button>
         </div>

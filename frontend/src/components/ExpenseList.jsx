@@ -109,26 +109,14 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
     };
 
     return (
-        <ul style={{ padding: 0, listStyle: "none" }}>
+        <ul className="trip-list">
             {expenses.map((ex) => (
-                <li
-                    key={ex.id}
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "12px 16px",
-                        marginBottom: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        backgroundColor: "#fff",
-                    }}
-                >
+                <li key={ex.id} className="card trip-item">
                     {/* Show edit form if this expense is being edited, otherwise show display view */}
                     {editingId === ex.id ? (
                         <>
                             {/* Edit mode: Input fields for editing expense data */}
-                            <div style={{ display: "flex", gap: "8px" }}>
+                            <div className="actions" style={{ flexWrap: "wrap" }}>
                                 <input
                                     value={editData.category}
                                     onChange={(e) =>
@@ -160,12 +148,12 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                                 />
                             </div>
                             {/* Save and Cancel buttons */}
-                            <div style={{ display: "flex", gap: "6px" }}>
-                                <button onClick={() => saveEdit(ex.id)}>💾 Save</button>
-                                <button onClick={() => {
+                            <div className="actions">
+                                <button onClick={() => saveEdit(ex.id)}>Save</button>
+                                <button className="btn-ghost" onClick={() => {
                                     setEditingId(null);
                                     setErr(""); // Clear error when canceling
-                                }}>✖ Cancel</button>
+                                }}>Cancel</button>
                             </div>
                         </>
                     ) : (
@@ -173,20 +161,20 @@ export default function ExpenseList({ expenses, setExpenses, setErr, trip }) {
                             {/* Display mode: Show expense information */}
                             <div>
                                 <strong>{ex.category}</strong> — ${ex.amount}
-                                <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
+                                <div className="trip-meta">
                                     {ex.date?.slice(0, 10)}
                                     {ex.end_date ? ` → ${ex.end_date.slice(0, 10)}` : ""}
                                 </div>
                                 {ex.description && (
-                                    <div style={{ opacity: 0.7, fontSize: "0.85rem" }}>
+                                    <div className="trip-meta">
                                         {ex.description}
                                     </div>
                                 )}
                             </div>
                             {/* Edit and Delete buttons */}
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <button onClick={() => handleEdit(ex)}>✎ Edit</button>
-                                <button onClick={() => removeExpense(ex.id)}>🗑 Delete</button>
+                            <div className="actions">
+                                <button className="btn-soft" onClick={() => handleEdit(ex)}>Edit</button>
+                                <button className="btn-danger" onClick={() => removeExpense(ex.id)}>Delete</button>
                             </div>
                         </>
                     )}
